@@ -11,7 +11,11 @@ const CARD_GAP = 18;
 const CARD_PAD = 24;
 const FAN_ANGLE = 10;
 const ROW_OFFSET = 52;
-const UNFOLD_SCROLL = '110vh';
+
+const UNFOLD_END = 0.85;
+const DRIFT_PX = 26;
+const MARQUEE_SPEED = 50;
+const EASE_IN = 1.1;
 
 const DEFAULT_IMAGES = [
   { src: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1200&q=80', alt: 'The Grand Horizon', location: 'Cliffside Bay, Maldives', size: 'md' },
@@ -27,6 +31,9 @@ const itemVariants = {
   hidden: { opacity: 0, scale: 0.6, y: 30 },
   show: { opacity: 1, scale: 1, y: 0, transition: { duration: 0.6, ease: 'easeOut' } },
 };
+
+const clamp01 = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
+const smoothstep = (t) => t * t * (3 - 2 * t);
 
 const Gallery = () => {
   const mobileRef = useRef(null);
@@ -65,150 +72,160 @@ const Gallery = () => {
     if (!n) return;
 
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    let marqueeTween = null;
-    let tl = null;
-    let committed = false;
 
-    const cardW = () => cards[0].offsetWidth;
-    const spacing = () => cardW() + CARD_GAP;
-    const slotX = (i) => CARD_PAD + i * spacing() + cardW() / 2 - stage.offsetWidth / 2;
-
-    const setBase = () => {
-      gsap.set(cards, { left: '50%', top: '50%', xPercent: -50, yPercent: -50 });
+    const metrics = { stageW: 0, stageH: 0, cardW: 0, cardH: 0, spacing: 0, slotX: [], dist: 0 };
+    const computeMetrics = () => {
+      metrics.stageW = stage.offsetWidth;
+      metrics.stageH = stage.offsetHeight;
+      metrics.cardW = cards[0].offsetWidth;
+      metrics.cardH = cards[0].offsetHeight;
+      metrics.spacing = metrics.cardW + CARD_GAP;
+      metrics.slotX = cards.map((_, i) => CARD_PAD + i * metrics.spacing + metrics.cardW / 2 - metrics.stageW / 2);
+      metrics.dist = n * metrics.spacing;
     };
 
-    const setFan = () => {
-      const stageH = stage.offsetHeight;
-      const h = cards[0].offsetHeight;
-      const center = (n - 1) / 2;
-      const pivotY = Math.min(stageH - 40, Math.max(stageH * 0.62, h + 180));
-      const y = pivotY - stageH / 2 - h / 2;
-      cards.forEach((c, i) => {
-        if (i < n) {
+    const center = (n - 1) / 2;
+
+    let committed = false;
+    let marqueeX = 0;
+    let launchT = 0;
+    let paused = false;
+
+    const progress = { p: 0 };
+
+    const render = () => {
+      const p = committed ? 1 : progress.p;
+      const u = smoothstep(clamp01(p / UNFOLD_END));
+
+      if (u < 1) {
+        const pivotY = Math.min(metrics.stageH - 40, Math.max(metrics.stageH * 0.62, metrics.cardH + 180));
+        const fanY = pivotY - metrics.stageH / 2 - metrics.cardH / 2;
+        for (let i = 0; i < n; i++) {
           const off = i - center;
-          gsap.set(c, {
-            x: 0,
-            y,
-            rotation: off * FAN_ANGLE,
-            scale: 1 - Math.abs(off) * 0.03,
+          const fanRot = off * FAN_ANGLE;
+          const fanScale = 1 - Math.abs(off) * 0.03;
+          gsap.set(cards[i], {
+            x: metrics.slotX[i] * u,
+            y: fanY + (ROW_OFFSET - fanY) * u,
+            rotation: fanRot * (1 - u),
+            scale: fanScale + (1 - fanScale) * u,
             transformOrigin: '50% 100%',
             zIndex: Math.round(n - Math.abs(off)),
             opacity: 1,
           });
-        } else {
-          gsap.set(c, { x: slotX(i), y: ROW_OFFSET, rotation: 0, scale: 1, transformOrigin: '50% 50%', zIndex: 1, opacity: 0 });
         }
-      });
-    };
-
-    const setCarousel = () => {
-      cards.forEach((c, i) => {
-        gsap.set(c, { x: slotX(i), y: ROW_OFFSET, rotation: 0, scale: 1, transformOrigin: '50% 50%', zIndex: 2, opacity: 1 });
-      });
-      gsap.set(track, { x: 0 });
-    };
-
-    const startMarquee = () => {
-      if (marqueeTween) marqueeTween.kill();
-      if (reduceMotion) { gsap.set(track, { x: 0 }); return; }
-      const dist = n * spacing();
-      marqueeTween = gsap.to(track, { x: -dist, duration: dist / 40, ease: 'none', repeat: -1 });
-      marqueeTween.timeScale(0);
-      gsap.to(marqueeTween, { timeScale: 1, duration: 3, ease: 'power2.out', overwrite: true });
-    };
-
-    const commit = () => {
-      if (committed) return;
-      committed = true;
-      committedRef.current = true;
-      if (tl) {
-        if (tl.scrollTrigger) tl.scrollTrigger.kill();
-        tl.kill();
-        tl = null;
+        const fade = clamp01((u - 0.72) / 0.28);
+        for (let i = n; i < cards.length; i++) {
+          gsap.set(cards[i], {
+            x: metrics.slotX[i],
+            y: ROW_OFFSET,
+            rotation: 0,
+            scale: 1,
+            transformOrigin: '50% 50%',
+            zIndex: 2,
+            opacity: fade,
+          });
+        }
+      } else {
+        for (let i = 0; i < cards.length; i++) {
+          gsap.set(cards[i], {
+            x: metrics.slotX[i],
+            y: ROW_OFFSET,
+            rotation: 0,
+            scale: 1,
+            transformOrigin: '50% 50%',
+            zIndex: 2,
+            opacity: 1,
+          });
+        }
       }
-      setCarousel();
-      startMarquee();
+
+      let trackX;
+      if (reduceMotion) {
+        trackX = 0;
+      } else if (!committed) {
+        trackX = p <= UNFOLD_END ? 0 : -DRIFT_PX * ((p - UNFOLD_END) / (1 - UNFOLD_END));
+      } else {
+        trackX = -(marqueeX % metrics.dist);
+      }
+      gsap.set(track, { x: trackX });
     };
 
-    const pauseMarquee = () => { if (marqueeTween) marqueeTween.pause(); };
-    const resumeMarquee = () => { if (marqueeTween) marqueeTween.play(); };
-    track.addEventListener('pointerdown', pauseMarquee);
-    window.addEventListener('pointerup', resumeMarquee);
+    const tick = (_time, deltaTime) => {
+      if (!committed || paused || reduceMotion) return;
+      const dt = (deltaTime || 16) / 1000;
+      launchT = Math.min(launchT + dt, EASE_IN);
+      const mul = 0.35 + 0.65 * (1 - Math.pow(1 - launchT / EASE_IN, 3));
+      marqueeX += MARQUEE_SPEED * mul * dt;
+      render();
+    };
 
     const onResize = () => {
-      if (committed || committedRef.current) {
-        setCarousel();
-        startMarquee();
+      computeMetrics();
+      if (committed) {
+        render();
       } else if (tl && tl.scrollTrigger) {
-        setFan();
+        render();
         tl.scrollTrigger.refresh();
       }
     };
-    window.addEventListener('resize', onResize);
 
-    setBase();
+    const pauseMarquee = () => { paused = true; };
+    const resumeMarquee = () => { paused = false; };
+    track.addEventListener('pointerdown', pauseMarquee);
+    window.addEventListener('pointerup', resumeMarquee);
 
-    if (committedRef.current) {
-      setCarousel();
-      startMarquee();
-      return () => {
-        if (marqueeTween) marqueeTween.kill();
-        window.removeEventListener('resize', onResize);
-        track.removeEventListener('pointerdown', pauseMarquee);
-        window.removeEventListener('pointerup', resumeMarquee);
-      };
-    }
+    computeMetrics();
+    gsap.set(cards, { left: '50%', top: '50%', xPercent: -50, yPercent: -50 });
 
-    if (reduceMotion) {
-      setCarousel();
-      committedRef.current = true;
+    let tl = null;
+
+    if (committedRef.current || reduceMotion) {
       committed = true;
-      startMarquee();
+      committedRef.current = true;
+      progress.p = 1;
+      render();
+      gsap.ticker.add(tick);
       return () => {
+        if (tl) { if (tl.scrollTrigger) tl.scrollTrigger.kill(); tl.kill(); }
+        gsap.ticker.remove(tick);
         window.removeEventListener('resize', onResize);
         track.removeEventListener('pointerdown', pauseMarquee);
         window.removeEventListener('pointerup', resumeMarquee);
       };
     }
 
-    setFan();
+    render();
 
     tl = gsap.timeline({
       scrollTrigger: {
         trigger: section,
         start: 'top top',
-        end: `+=${UNFOLD_SCROLL}`,
+        end: '+=100vh',
         scrub: true,
         invalidateOnRefresh: true,
-        onRefresh: setFan,
+        onUpdate: () => render(),
+        onRefresh: () => render(),
       },
     });
-    tl.eventCallback('onComplete', commit);
-
-    const center = (n - 1) / 2;
-    cards.forEach((c, i) => {
-      if (i < n) {
-        const delay = Math.abs(i - center) * 0.12;
-        tl.to(c, {
-          x: () => slotX(i),
-          y: ROW_OFFSET,
-          rotation: 0,
-          scale: 1,
-          transformOrigin: '50% 50%',
-          duration: 1.8,
-          ease: 'power3.inOut',
-        }, delay);
-      } else {
-        tl.to(c, { opacity: 1, duration: 0.8, ease: 'power1.out' }, 0.65);
-      }
+    tl.to(progress, { p: 1, duration: 1, ease: 'none' });
+    tl.eventCallback('onComplete', () => {
+      if (committed) return;
+      committed = true;
+      committedRef.current = true;
+      progress.p = 1;
+      marqueeX = DRIFT_PX;
+      render();
     });
+
+    gsap.ticker.add(tick);
 
     return () => {
       if (tl) {
         if (tl.scrollTrigger) tl.scrollTrigger.kill();
         tl.kill();
       }
-      if (marqueeTween) marqueeTween.kill();
+      gsap.ticker.remove(tick);
       window.removeEventListener('resize', onResize);
       track.removeEventListener('pointerdown', pauseMarquee);
       window.removeEventListener('pointerup', resumeMarquee);
@@ -220,38 +237,33 @@ const Gallery = () => {
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent" />
 
       {isMobile ? (
-        <div ref={mobileRef} className="relative bg-luxury-cream" style={{ height: `calc(100dvh + ${UNFOLD_SCROLL})` }}>
-          <div className="sticky top-0 h-[100dvh] overflow-hidden bg-luxury-cream">
-            <div className="absolute top-0 left-0 right-0 z-20 pt-8 pb-4 bg-gradient-to-b from-luxury-cream via-luxury-cream/80 to-transparent pointer-events-none">
-              <div className="luxury-container text-center">
-                <span className="section-label">Gallery</span>
-                <h2 className="section-title mb-3">A Visual Journey</h2>
-                <p className="section-subtitle mx-auto">Explore the beauty and elegance that awaits at our handpicked destinations.</p>
-              </div>
-            </div>
+        <div className="relative bg-luxury-cream">
+          <div className="luxury-container text-center pt-16 pb-6">
+            <span className="section-label">Gallery</span>
+            <h2 className="section-title mb-3">A Visual Journey</h2>
+            <p className="section-subtitle mx-auto">Explore the beauty and elegance that awaits at our handpicked destinations.</p>
+          </div>
 
-            <div ref={stageRef} className="absolute inset-0">
-              <div ref={trackRef} className="absolute inset-0 bg-luxury-cream will-change-transform">
-                {mobileCards.map((img, i) => (
-                  <div
-                    key={i}
-                    ref={(el) => { cardsRef.current[i] = el; }}
-                    className="absolute will-change-transform cursor-pointer"
-                    style={{ width: 'min(76vw, 310px)', height: 'min(102vw, 420px)' }}
-                    onClick={() => setLightbox(i % mobileSource.length)}
-                  >
-                    <div className="relative w-full h-full overflow-hidden rounded-2xl shadow-2xl shadow-black/20">
-                      <img src={img.src} alt={img.alt} className="w-full h-full object-cover" draggable={false} loading={i < 2 ? 'eager' : 'lazy'} />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
-                      <div className="absolute bottom-0 left-0 right-0 p-5 pointer-events-none">
-                        <h3 className="font-display text-base text-white">{img.alt}</h3>
-                        <p className="text-white/60 text-[10px] tracking-wider uppercase mt-0.5">{img.location}</p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+          <div className="grid grid-cols-2 gap-3 px-6 pb-16">
+            {lightboxImages.map((img, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 24, scale: 0.95 }}
+                whileInView={{ opacity: 1, y: 0, scale: 1 }}
+                viewport={{ once: true, margin: '-40px' }}
+                transition={{ duration: 0.5, ease: 'easeOut' }}
+                className={`relative overflow-hidden rounded-2xl bg-luxury-cream ${
+                  img.size === 'md' ? 'col-span-2 aspect-[16/10]' : 'col-span-1 aspect-[4/5]'
+                }`}
+                onClick={() => setLightbox(i)}
+              >
+                <img src={img.src} alt={img.alt} className="w-full h-full object-cover" loading={i < 2 ? 'eager' : 'lazy'} draggable={false} />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
+                <div className="absolute bottom-0 left-0 right-0 p-3 pointer-events-none">
+                  <h3 className="font-display text-sm text-white leading-tight">{img.alt}</h3>
+                </div>
+              </motion.div>
+            ))}
           </div>
         </div>
       ) : (
