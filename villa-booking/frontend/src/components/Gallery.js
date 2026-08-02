@@ -238,13 +238,13 @@ const Gallery = () => {
 
       {isMobile ? (
         <div className="relative bg-luxury-cream">
-          <div className="luxury-container text-center pt-16 pb-6">
+          <div className="luxury-container text-center pt-14 pb-6">
             <span className="section-label">Gallery</span>
             <h2 className="section-title mb-3">A Visual Journey</h2>
             <p className="section-subtitle mx-auto">Explore the beauty and elegance that awaits at our handpicked destinations.</p>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 px-6 pb-16">
+          <div className="grid grid-cols-2 gap-3 px-6 pb-14">
             {lightboxImages.map((img, i) => (
               <motion.div
                 key={i}

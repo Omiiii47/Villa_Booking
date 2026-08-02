@@ -56,7 +56,7 @@ const About = () => (
           </h1>
           <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
             className="text-gray-500 text-lg leading-relaxed font-light">
-            Serenity Escapes was born from a simple belief: that the right setting can transform a vacation into a
+            Solscape Stays was born from a simple belief: that the right setting can transform a vacation into a
             life-defining memory. For over a decade, we have been curating the world's most exceptional villas,
             pairing unparalleled properties with impeccable service.
           </motion.p>

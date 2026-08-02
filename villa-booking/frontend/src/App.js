@@ -19,6 +19,7 @@ import AnimatedOutlet from './components/AnimatedOutlet';
 import ScrollToTop from './components/ScrollToTop';
 import Cursor from './components/Cursor';
 import SmoothScroll from './components/SmoothScroll';
+import WhatsAppButton from './components/WhatsAppButton';
 
 function AppContent() {
   const location = useLocation();
@@ -58,6 +59,7 @@ function App() {
           <AppContent />
         </WishlistProvider>
       </AuthProvider>
+      <WhatsAppButton />
     </BrowserRouter>
   );
 }

@@ -24,9 +24,9 @@ const Register = () => {
       <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="w-full max-w-md px-4">
         <div className="bg-white rounded-3xl shadow-xl shadow-black/[0.02] border border-gray-100 p-8 md:p-10">
           <div className="text-center mb-8">
-            <Link to="/" className="font-display text-2xl text-luxury-black">Serenity<span className="text-luxury-accent">Escapes</span></Link>
+            <Link to="/" className="font-display text-2xl text-luxury-black">Solscape<span className="text-luxury-accent">Stays</span></Link>
             <h1 className="font-display text-3xl mt-8 mb-2">Create Account</h1>
-            <p className="text-gray-400 text-sm">Join Serenity Escapes for exclusive access.</p>
+            <p className="text-gray-400 text-sm">Join Solscape Stays for exclusive access.</p>
           </div>
           <form onSubmit={handleSubmit} className="space-y-5">
             {error && <div className="bg-red-50 text-red-500 text-sm p-3.5 rounded-2xl">⚠ {error}</div>}

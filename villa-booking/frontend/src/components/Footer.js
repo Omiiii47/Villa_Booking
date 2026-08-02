@@ -22,7 +22,7 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12">
           <div className="lg:col-span-2">
             <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-              <h3 className="font-display text-2xl mb-3">Serenity<span className="text-luxury-accent">Escapes</span></h3>
+              <h3 className="font-display text-2xl mb-3">Solscape<span className="text-luxury-accent">Stays</span></h3>
               <p className="text-gray-500 text-sm leading-relaxed max-w-sm mb-8">
                 Curating extraordinary villa experiences for discerning travelers who seek the exceptional.
               </p>
@@ -55,7 +55,7 @@ const Footer = () => {
               <div className="flex flex-col gap-4 text-sm">
                 <div className="flex items-start gap-3 text-gray-500"><FaMapMarkerAlt className="text-luxury-accent mt-1 shrink-0" /> 123 Luxury Lane, Paradise Valley, AZ 85253</div>
                 <div className="flex items-center gap-3 text-gray-500"><FaPhone className="text-luxury-accent shrink-0" /> +1 (555) 123-4567</div>
-                <div className="flex items-center gap-3 text-gray-500"><FaEnvelope className="text-luxury-accent shrink-0" /> concierge@serenityescapes.com</div>
+                <div className="flex items-center gap-3 text-gray-500"><FaEnvelope className="text-luxury-accent shrink-0" /> concierge@solscapestays.com</div>
               </div>
             </motion.div>
           </div>
@@ -63,7 +63,7 @@ const Footer = () => {
         <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }}
           className="border-t border-gray-800 mt-16 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-gray-600 text-xs"
         >
-          <p>&copy; {year} Serenity Escapes. All rights reserved.</p>
+          <p>&copy; {year} Solscape Stays. All rights reserved.</p>
           <div className="flex gap-6">
             <Link to="#/" className="hover:text-luxury-accent transition-colors">Privacy Policy</Link>
             <Link to="#/" className="hover:text-luxury-accent transition-colors">Terms of Service</Link>

@@ -47,7 +47,7 @@ const Contact = () => {
                 {[
                   { icon: FaMapMarkerAlt, title: 'Visit Us', desc: '123 Luxury Lane\nParadise Valley, AZ 85253' },
                   { icon: FaPhone, title: 'Call Us', desc: '+1 (555) 123-4567' },
-                  { icon: FaEnvelope, title: 'Email Us', desc: 'concierge@serenityescapes.com' },
+                  { icon: FaEnvelope, title: 'Email Us', desc: 'concierge@solscapestays.com' },
                   { icon: FaClock, title: '24/7 Concierge', desc: 'We are always here for you.' },
                 ].map((item) => (
                   <div key={item.title}>

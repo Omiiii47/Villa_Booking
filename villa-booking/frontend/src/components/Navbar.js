@@ -50,9 +50,9 @@ const Navbar = () => {
               <span className={`font-display text-xl md:text-2xl tracking-tight transition-colors duration-500 ${
                 scrolled ? 'text-luxury-black' : 'text-white'
               }`}>
-                Serenity
+                Solscape
               </span>
-              <span className="font-display text-xl md:text-2xl font-light italic text-luxury-accent">Escapes</span>
+              <span className="font-display text-xl md:text-2xl font-light italic text-luxury-accent">Stays</span>
             </Link>
 
             <div className="hidden lg:flex items-center gap-1">
@@ -134,8 +134,8 @@ const Navbar = () => {
           >
             <div className="luxury-container flex items-center justify-between h-20 md:h-24">
               <Link to="/" className="flex items-center gap-1.5" onClick={() => setMobileOpen(false)}>
-                <span className="font-display text-xl md:text-2xl tracking-tight text-luxury-black">Serenity</span>
-                <span className="font-display text-xl md:text-2xl font-light italic text-luxury-accent">Escapes</span>
+                <span className="font-display text-xl md:text-2xl tracking-tight text-luxury-black">Solscape</span>
+                <span className="font-display text-xl md:text-2xl font-light italic text-luxury-accent">Stays</span>
               </Link>
               <button
                 onClick={() => setMobileOpen(false)}

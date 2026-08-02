@@ -32,7 +32,7 @@ const Newsletter = () => {
               <FaPaperPlane className="text-luxury-accent text-xl" />
               <div className="text-left">
                 <p className="text-luxury-accent font-display text-lg">Thank you!</p>
-                <p className="text-white/50 text-sm">Welcome to the Serenity Escapes family.</p>
+                <p className="text-white/50 text-sm">Welcome to the Solscape Stays family.</p>
               </div>
             </motion.div>
           ) : (

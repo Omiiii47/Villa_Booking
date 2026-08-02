@@ -23,7 +23,7 @@ const Login = () => {
       <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="w-full max-w-md px-4">
         <div className="bg-white rounded-3xl shadow-xl shadow-black/[0.02] border border-gray-100 p-8 md:p-10">
           <div className="text-center mb-8">
-            <Link to="/" className="font-display text-2xl text-luxury-black">Serenity<span className="text-luxury-accent">Escapes</span></Link>
+            <Link to="/" className="font-display text-2xl text-luxury-black">Solscape<span className="text-luxury-accent">Stays</span></Link>
             <h1 className="font-display text-3xl mt-8 mb-2">Welcome Back</h1>
             <p className="text-gray-400 text-sm">Sign in to manage your bookings and wishlist.</p>
           </div>
