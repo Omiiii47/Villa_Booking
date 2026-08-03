@@ -1,14 +1,15 @@
 # AGENTS.md
 
-Luxury villa booking platform. Two independent packages under `villa-booking/`: a
-Create React App frontend and an Express + Mongoose backend. They run as two
-separate dev servers (no root workspace tooling).
+Luxury villa booking platform. Three independent packages under `villa-booking/`:
+a Create React App frontend, a Next.js migration in progress, and an Express +
+Mongoose backend. They run as separate dev servers (no root workspace tooling).
 
 ## Running the app
 
 - Backend: `cd villa-booking/backend && npm run dev` (nodemon `server.js`), listens on port `5000`.
-- Frontend: `cd villa-booking/frontend && npm start`, listens on `3000`.
-- Run both. CORS is wide-open, so origin port doesn't matter.
+- Frontend (the live CRA app): `cd villa-booking/frontend && npm start`, listens on `3000`.
+- `villa-booking/frontend-next/` is an early, **untracked** Next.js 16.2.12 migration — still create-next-app boilerplate, NOT wired to the backend/API. Don't treat it as the active app. Its default dev port (3000) conflicts with the CRA app; use `next dev -p <port>` if running both.
+- Run backend + CRA frontend. CORS is wide-open, so origin port doesn't matter.
 - Frontend reaches the API at `http://localhost:5000/api` via `src/services/api.js` (`axios`, baseURL overridable with `REACT_APP_API_URL`).
 - Health check: `GET /api/health`.
 
@@ -38,6 +39,7 @@ separate dev servers (no root workspace tooling).
 
 - CRA + React 19, Tailwind CSS 3, `react-router-dom` v7, framer-motion/GSAP/@studio-freight/lenis for animation. Mixes `src/pages/`, `src/components/`, `src/services/` (axios API layer), `src/context/` (AuthContext, WishlistContext), `src/hooks/`, `src/layouts/`.
 - Do NOT run `npm run eject`.
+- If you touch `frontend-next/`: its own `AGENTS.md` warns this Next.js major has breaking conventions vs. typical training data — read `node_modules/next/dist/docs/` there before writing code. It isn't wired to the API, so don't add API/backend code to it yet.
 
 ## Verification
 
