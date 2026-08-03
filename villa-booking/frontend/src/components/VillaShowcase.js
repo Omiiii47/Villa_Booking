@@ -123,7 +123,9 @@ const VillaShowcase = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
           {villas.map((villa, i) => (
-            <VillaCard key={villa.slug} villa={villa} i={i} />
+            <div key={villa.slug} className={i === 2 ? 'hidden md:block' : ''}>
+              <VillaCard villa={villa} i={i} />
+            </div>
           ))}
         </div>
       </div>

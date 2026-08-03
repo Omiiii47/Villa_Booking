@@ -14,23 +14,29 @@ separate dev servers (no root workspace tooling).
 
 ## Seeding (non-obvious)
 
-- DB seed is `node utils/seed.js` (run from `villa-booking/backend`, Redis-backed Mongoose). It is NOT an npm script. Running it **wipes** all `Villa` and `Amenity` collections.
+- DB seed is `node utils/seed.js` (run from `villa-booking/backend`). It is NOT an npm script. Running it **wipes** all `Villa` and `Amenity` collections.
 - Creates sample villas/amenities and a default admin account if missing: `admin@villabooking.com` / `admin123`.
 - `config/db.js` and `utils/seed.js` both hardcode `dns.setServers(['8.8.8.8','1.1.1.1'])` to resolve the Atlas SRV host. Leave this in place or seeding/DB bootstrap will fail on hosts with restrictive DNS.
 
 ## Config / secrets
 
-- `villa-booking/backend/.env` holds the real Atlas `MONGO_URI`, `JWT_SECRET`, `JWT_EXPIRE`. It is committed/checked in — do not introduce new secrets; keep existing ones as-is. Cloudinary values are stubbed placeholders.
+- `villa-booking/backend/.env` exists locally but is **gitignored / not committed**; it holds the real Atlas `MONGO_URI`, `JWT_SECRET`, `JWT_EXPIRE`. Keep existing values as-is and do not introduce new secrets. Cloudinary values are stubbed placeholders.
 - Backend uploads to a local `uploads/` dir via `multer` disk storage (5MB image limit); served statically at `/uploads`. Cloudinary is installed but not actually used for uploads.
 
 ## Auth & roles
 
 - JWT auth: `protect` middleware requires a `Bearer <token>` header; `admin` middleware enforces `req.user.role === 'admin'` (`backend/middleware/auth.js`). Use `{ protect, admin }` for protected routes.
-- Backend is CommonJS (`require`/`module.exports`). Routes are wired in `server.js`; one file per resource under `routes/`, `controllers/`, `models/`, `middleware/`.
+- Frontend stores the session in `localStorage` under key `villaUser`; `src/services/api.js` attaches its token as the Bearer header and redirects to `/login` on a 401 response.
+
+## Backend notes
+
+- CommonJS (`require`/`module.exports`), Express 5 + Mongoose 9. Routes are wired in `server.js`; one file per resource under `routes/`, `controllers/`, `models/`, `middleware/` (contact + site-content share `adminController`).
+- Villa routes: `/featured` and `/slug/:slug` are registered before `/:id` — keep that order or they'll be shadowed (`routes/villaRoutes.js`).
+- `SiteContent` (hero/gallery/showcase) is lazily created with defaults on first read via `adminController.getOrCreateContent`. `GET /api/site-content` is public; `GET|PUT /api/admin/site-content` is admin-only.
 
 ## Frontend conventions
 
-- CRA + React 19, Tailwind CSS 3, `react-router-dom` v7, framer-motion/GSAP/@studio-freight/lenis for animation. Mixes `src/pages/`, `src/components/`, `src/services/` (axios API layer), `src/context/` (AuthContext, WishlistContext), `src/hooks/`.
+- CRA + React 19, Tailwind CSS 3, `react-router-dom` v7, framer-motion/GSAP/@studio-freight/lenis for animation. Mixes `src/pages/`, `src/components/`, `src/services/` (axios API layer), `src/context/` (AuthContext, WishlistContext), `src/hooks/`, `src/layouts/`.
 - Do NOT run `npm run eject`.
 
 ## Verification
