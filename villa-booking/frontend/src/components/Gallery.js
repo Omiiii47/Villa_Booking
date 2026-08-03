@@ -70,15 +70,6 @@ const Gallery = () => {
     return () => window.removeEventListener('resize', check);
   }, []);
 
-  useEffect(() => {
-    try {
-      if (window.sessionStorage.getItem('villaFilmUnrolled') === '1') {
-        unrolledRef.current = true;
-        setUnrolled(true);
-      }
-    } catch {}
-  }, []);
-
   const stopAtmosphere = useCallback(() => {
     if (flickerRef.current) { flickerRef.current.kill(); flickerRef.current = null; }
     if (shakeRef.current) { shakeRef.current.kill(); shakeRef.current = null; }
@@ -96,7 +87,6 @@ const Gallery = () => {
   const handleUnroll = useCallback(() => {
     if (unrolledRef.current) return;
     unrolledRef.current = true;
-    try { window.sessionStorage.setItem('villaFilmUnrolled', '1'); } catch {}
     setUnrolled(true);
 
     const track = trackRef.current;
