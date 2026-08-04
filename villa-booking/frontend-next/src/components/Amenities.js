@@ -125,9 +125,7 @@ const MobileAmenitiesSlider = () => {
 };
 
 const Amenities = () => {
-  const [isMobile, setIsMobile] = useState(() =>
-    typeof window !== 'undefined' ? window.matchMedia('(max-width: 768px)').matches : false
-  );
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     const mq = window.matchMedia('(max-width: 768px)');

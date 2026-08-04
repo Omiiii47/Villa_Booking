@@ -124,9 +124,7 @@ const measureRef = useRef(0); // width of one set of cards -> seamless loop boun
 };
 
 const Experiences = () => {
-  const [isMobile, setIsMobile] = useState(() =>
-    typeof window !== 'undefined' ? window.matchMedia('(max-width: 768px)').matches : false
-  );
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     const mq = window.matchMedia('(max-width: 768px)');

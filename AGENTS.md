@@ -1,6 +1,8 @@
 # AGENTS.md
 
-Luxury villa booking platform ("Solscape Stays"). Two packages under `villa-booking/`: a Next.js App Router frontend and an Express + Mongoose backend. They run as separate dev servers (no root workspace tooling). The legacy CRA app (`frontend/`) has been removed — `frontend-next/` is the active frontend and is wired to the backend API.
+Luxury villa booking platform ("Solscape Stays"). Two packages under `villa-booking/`: a Next.js App Router frontend and an Express + Mongoose backend. They run as separate dev servers. The legacy CRA app (`frontend/`) has been removed — `frontend-next/` is the active frontend and is wired to the backend API.
+
+There is **no root tooling**: no root `package.json`/lockfile, `.gitignore`, README, or CI. Run all `npm` commands inside `villa-booking/backend` or `villa-booking/frontend-next`; the git repo root is this directory.
 
 ## Running the app
 
