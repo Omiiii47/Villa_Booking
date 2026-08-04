@@ -287,7 +287,7 @@ const Gallery = () => {
                     </div>
                     <div className="flex flex-col items-center gap-2">
                       <span className="inline-flex items-center gap-2 rounded-full bg-luxury-black text-white text-[10px] uppercase tracking-[0.2em] px-6 py-3 shadow-xl shadow-black/20">
-                        <span className="text-sm">ðŸŽžï¸</span> Tap to Unroll
+                        <span className="text-sm">🎎️</span> Tap to Unroll
                       </span>
                       <span className="text-[10px] uppercase tracking-[0.3em] text-luxury-accent">Reveal the Journey</span>
                     </div>
@@ -297,7 +297,7 @@ const Gallery = () => {
             </div>
 
             {unrolled && (
-              <p className="text-center mt-5 text-[10px] uppercase tracking-[0.25em] text-gray-400">Swipe the film strip âŸ·</p>
+              <p className="text-center mt-5 text-[10px] uppercase tracking-[0.25em] text-gray-400">Swipe the film strip ⟷</p>
             )}
           </div>
         </div>

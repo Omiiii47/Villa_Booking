@@ -30,7 +30,7 @@ const Login = () => {
             <p className="text-gray-400 text-sm">Sign in to manage your bookings and wishlist.</p>
           </div>
           <form onSubmit={handleSubmit} className="space-y-5">
-            {error && <div className="bg-red-50 text-red-500 text-sm p-3.5 rounded-2xl">âš  {error}</div>}
+            {error && <div className="bg-red-50 text-red-500 text-sm p-3.5 rounded-2xl">⚠ {error}</div>}
             <div>
               <label className="text-xs uppercase tracking-widest text-gray-500 mb-2 block">Email</label>
               <div className="relative"><FaEnvelope className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" /><input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required className="input-field !pl-12 rounded-2xl" placeholder="your@email.com" /></div>

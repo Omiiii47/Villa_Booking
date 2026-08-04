@@ -19,7 +19,7 @@ const WhatsAppButton = () => (
     target="_blank"
     rel="noopener noreferrer"
     aria-label="Chat with us on WhatsApp"
-    className="whatsapp-float fixed z-[45] right-5 bottom-5 md:right-8 md:bottom-8 flex items-center justify-center rounded-full bg-[#25D366] shadow-[0_10px_30px_rgba(37,211,102,0.4)] hover:shadow-[0_18px_45px_rgba(37,211,102,0.55)] transition-[transform,box-shadow] duration-300 ease-out will-change-transform w-[54px] h-[54px] md:w-[60px] md:h-[60px] hover:scale-[1.08] active:scale-[0.95] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25D366]/50 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
+    className="whatsapp-float fixed z-[55] right-[max(1.25rem,env(safe-area-inset-right))] bottom-[max(1.25rem,env(safe-area-inset-bottom))] md:right-8 md:bottom-8 flex items-center justify-center rounded-full bg-[#25D366] shadow-[0_10px_30px_rgba(37,211,102,0.4)] hover:shadow-[0_18px_45px_rgba(37,211,102,0.55)] transition-[transform,box-shadow] duration-300 ease-out will-change-transform w-[54px] h-[54px] md:w-[60px] md:h-[60px] hover:scale-[1.08] active:scale-[0.95] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25D366]/50 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
   >
     <WhatsAppIcon className="w-[26px] h-[26px] md:w-[28px] md:h-[28px] text-white" />
   </a>

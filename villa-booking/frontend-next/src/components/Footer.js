@@ -27,9 +27,9 @@ const Footer = () => {
               <p className="text-gray-500 text-sm leading-relaxed max-w-sm mb-8">
                 Curating extraordinary villa experiences for discerning travelers who seek the exceptional.
               </p>
-              <div className="flex gap-6">
+              <div className="flex flex-wrap gap-x-6 gap-y-3">
                 {['Instagram', 'Twitter', 'Facebook', 'Pinterest'].map((s) => (
-                  <a key={s} href="#/" className="text-gray-600 hover:text-luxury-accent text-xs uppercase tracking-widest transition-colors">{s}</a>
+                  <a key={s} href="#/" className="text-gray-600 hover:text-luxury-accent text-xs uppercase tracking-widest transition-colors whitespace-nowrap">{s}</a>
                 ))}
               </div>
             </motion.div>

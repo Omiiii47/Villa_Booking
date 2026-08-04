@@ -1,16 +1,12 @@
 # AGENTS.md
 
-Luxury villa booking platform. Three independent packages under `villa-booking/`:
-a Create React App frontend, a Next.js migration in progress, and an Express +
-Mongoose backend. They run as separate dev servers (no root workspace tooling).
+Luxury villa booking platform ("Solscape Stays"). Two packages under `villa-booking/`: a Next.js App Router frontend and an Express + Mongoose backend. They run as separate dev servers (no root workspace tooling). The legacy CRA app (`frontend/`) has been removed — `frontend-next/` is the active frontend and is wired to the backend API.
 
 ## Running the app
 
 - Backend: `cd villa-booking/backend && npm run dev` (nodemon `server.js`), listens on port `5000`.
-- Frontend (the live CRA app): `cd villa-booking/frontend && npm start`, listens on `3000`.
-- `villa-booking/frontend-next/` is an early, **untracked** Next.js 16.2.12 migration — still create-next-app boilerplate, NOT wired to the backend/API. Don't treat it as the active app. Its default dev port (3000) conflicts with the CRA app; use `next dev -p <port>` if running both.
-- Run backend + CRA frontend. CORS is wide-open, so origin port doesn't matter.
-- Frontend reaches the API at `http://localhost:5000/api` via `src/services/api.js` (`axios`, baseURL overridable with `REACT_APP_API_URL`).
+- Frontend: `cd villa-booking/frontend-next && npm run dev`, listens on `3000`. Run both. CORS is wide-open, so origin port doesn't matter.
+- Frontend reaches the API at `http://localhost:5000/api` via `src/services/api.js` (axios, baseURL overridable with `NEXT_PUBLIC_API_URL`).
 - Health check: `GET /api/health`.
 
 ## Seeding (non-obvious)
@@ -35,13 +31,15 @@ Mongoose backend. They run as separate dev servers (no root workspace tooling).
 - Villa routes: `/featured` and `/slug/:slug` are registered before `/:id` — keep that order or they'll be shadowed (`routes/villaRoutes.js`).
 - `SiteContent` (hero/gallery/showcase) is lazily created with defaults on first read via `adminController.getOrCreateContent`. `GET /api/site-content` is public; `GET|PUT /api/admin/site-content` is admin-only.
 
-## Frontend conventions
+## Frontend (frontend-next) notes
 
-- CRA + React 19, Tailwind CSS 3, `react-router-dom` v7, framer-motion/GSAP/@studio-freight/lenis for animation. Mixes `src/pages/`, `src/components/`, `src/services/` (axios API layer), `src/context/` (AuthContext, WishlistContext), `src/hooks/`, `src/layouts/`.
-- Do NOT run `npm run eject`.
-- If you touch `frontend-next/`: its own `AGENTS.md` warns this Next.js major has breaking conventions vs. typical training data — read `node_modules/next/dist/docs/` there before writing code. It isn't wired to the API, so don't add API/backend code to it yet.
+- Next.js **16.2.12** App Router + React 19, Tailwind CSS **v4** (via `@tailwindcss/postcss` — no `tailwind.config.js`), framer-motion/GSAP/@studio-freight/lenis for animation.
+- Next 16 has breaking conventions vs. typical training data. `frontend-next/AGENTS.md` (also referenced by `CLAUDE.md`) requires reading the relevant guide in `node_modules/next/dist/docs/` before writing code. Heed deprecation notices.
+- Structure: thin `page.jsx` files in `app/` are `'use client'` wrappers that render views from `src/views/` (e.g. `app/(site)/villas/[slug]/page.jsx` → `VillaDetails`). Shared code lives in `src/components/`, `src/context/` (AuthContext, WishlistContext), `src/hooks/` (useSiteContent), `src/services/` (axios layer). Route groups `(site)` and `(auth)` each define their own animated client layout with Navbar.
+- Code is plain JS (`.js`/`.jsx`), not TSX, despite the tsconfig.
 
 ## Verification
 
-- No lint or typecheck script on the backend. Frontend: `npm test` (react-scripts, watch mode) — run with `CI=true` to run once. `npm run build` for production.
-- An agent-generated change should at minimum pass `npm run build` in the frontend; backend has no checks, so verify manually against the running API.
+- Backend has no lint/typecheck/test — verify manually against the running API.
+- Frontend: `npm run lint` (eslint) and `npm run build` (next build) in `frontend-next`. No test suite.
+- An agent-generated frontend change should at minimum pass `npm run build` in `frontend-next`.
