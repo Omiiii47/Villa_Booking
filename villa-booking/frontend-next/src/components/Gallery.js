@@ -1,5 +1,5 @@
 'use client'
-import { useRef, useEffect, useState, useMemo, useCallback } from 'react';
+import { useRef, useEffect, useState, useMemo } from 'react';
 import { gsap } from 'gsap';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaTimes, FaChevronLeft, FaChevronRight, FaExpand } from 'react-icons/fa';
@@ -44,24 +44,18 @@ const Gallery = () => {
   const stageRef = useRef(null);
   const trackRef = useRef(null);
   const filmBaseRef = useRef(null);
-  const ctaRef = useRef(null);
   const frameRefs = useRef([]);
-  const flickerRef = useRef(null);
-  const shakeRef = useRef(null);
   const marqueeState = useRef({ x: 0, paused: false, dragging: false, lastX: 0 });
   const metricsRef = useRef({ dist: 0 });
   const reduceMotionRef = useRef(false);
-  const unrolledRef = useRef(false);
   const [lightbox, setLightbox] = useState(null);
   const [isMobile, setIsMobile] = useState(false);
   const [gutterW, setGutterW] = useState(0);
-  const [unrolled, setUnrolled] = useState(false);
 
   const siteContent = useSiteContent();
   const galleryImages = siteContent?.gallery?.length ? siteContent.gallery : DEFAULT_IMAGES;
   const desktopImages = galleryImages.length > 6 ? galleryImages.filter((_, i) => i !== 6) : galleryImages;
   const mobileSource = useMemo(() => galleryImages.slice(0, Math.min(6, galleryImages.length)), [galleryImages]);
-  const stackImages = mobileSource.slice(0, Math.min(4, mobileSource.length));
   const images = desktopImages;
   const lightboxImages = isMobile ? mobileSource : galleryImages;
 
@@ -85,62 +79,6 @@ const Gallery = () => {
     return () => window.removeEventListener('resize', measure);
   }, [isMobile]);
 
-  const stopAtmosphere = useCallback(() => {
-    if (flickerRef.current) { flickerRef.current.kill(); flickerRef.current = null; }
-    if (shakeRef.current) { shakeRef.current.kill(); shakeRef.current = null; }
-  }, []);
-
-  const startAtmosphere = useCallback(() => {
-    stopAtmosphere();
-    const film = filmBaseRef.current;
-    const stage = stageRef.current;
-    if (reduceMotionRef.current || !film || !stage) return;
-    flickerRef.current = gsap.to(film, { opacity: 0.985, duration: 0.32, repeat: -1, yoyo: true, ease: 'sine.inOut' });
-    shakeRef.current = gsap.to(stage, { x: '+=0.7', duration: 0.22, repeat: -1, yoyo: true, ease: 'sine.inOut', repeatDelay: 0.9 });
-  }, [stopAtmosphere]);
-
-  const handleUnroll = useCallback(() => {
-    if (unrolledRef.current) return;
-    unrolledRef.current = true;
-    setUnrolled(true);
-
-    const track = trackRef.current;
-    const film = filmBaseRef.current;
-    const frames = frameRefs.current.filter(Boolean);
-    if (!track || !film || !frames.length) return;
-    const reduce = reduceMotionRef.current;
-
-    if (ctaRef.current) {
-      gsap.to(ctaRef.current, { opacity: 0, scale: 1.06, duration: 0.4, ease: 'power2.in' });
-    }
-
-    gsap.to(film, { opacity: 1, duration: 0.5, ease: 'power1.out', delay: 0.05 });
-    gsap.to(track, { opacity: 1, duration: 0.4, ease: 'power1.out', delay: 0.05 });
-
-    const tl = gsap.timeline({
-      onComplete: () => {
-        gsap.set(frames, { x: 0, y: 0, rotation: 0, scaleX: 1, scaleY: 1, opacity: 1, transformOrigin: '50% 50%' });
-        marqueeState.current.x = 0;
-        marqueeState.current.paused = false;
-        if (!reduce) startAtmosphere();
-      },
-    });
-
-    tl.fromTo(
-      frames,
-      { x: 70, y: 46, rotation: 7, scaleY: 0.45, opacity: 0 },
-      { x: 0, y: 0, rotation: 0, scaleY: 1, opacity: 1, duration: 1.0, ease: 'elastic.out(1, 0.55)', stagger: 0.06 }
-    );
-
-    if (!reduce) {
-      gsap.fromTo(
-        track,
-        { x: 40 },
-        { x: 0, duration: 1.1, ease: 'power1.out' }
-      );
-    }
-  }, [startAtmosphere]);
-
   useEffect(() => {
     if (!isMobile) return;
     const stage = stageRef.current;
@@ -150,8 +88,9 @@ const Gallery = () => {
     metricsRef.current.dist = mobileSource.length * FRAME_W + gutterW;
     const s = marqueeState.current;
 
+    gsap.set(track, { x: 0, opacity: 1 });
+
     const onDown = (e) => {
-      if (!unrolledRef.current) return;
       s.paused = true;
       s.dragging = true;
       s.lastX = e.touches ? e.touches[0].clientX : e.clientX;
@@ -174,7 +113,7 @@ const Gallery = () => {
     };
 
     const tick = () => {
-      if (!unrolledRef.current || s.paused || reduceMotionRef.current) return;
+      if (s.paused || reduceMotionRef.current) return;
       const d = metricsRef.current.dist;
       if (!d) return;
       s.x += MARQUEE_SPEED * 0.016;
@@ -186,23 +125,16 @@ const Gallery = () => {
     window.addEventListener('pointerup', onUp);
     window.addEventListener('pointercancel', onUp);
 
-    if (unrolledRef.current) {
-      gsap.set(track, { x: 0, opacity: 1 });
-      if (filmBaseRef.current) gsap.set(filmBaseRef.current, { opacity: 1 });
-      startAtmosphere();
-    }
-
     gsap.ticker.add(tick);
 
     return () => {
       gsap.ticker.remove(tick);
-      stopAtmosphere();
       stage.removeEventListener('pointerdown', onDown);
       window.removeEventListener('pointermove', onMove);
       window.removeEventListener('pointerup', onUp);
       window.removeEventListener('pointercancel', onUp);
     };
-  }, [isMobile, mobileSource, gutterW, startAtmosphere, stopAtmosphere]);
+  }, [isMobile, mobileSource, gutterW]);
 
   return (
     <section className="relative bg-luxury-cream">
@@ -224,7 +156,7 @@ const Gallery = () => {
             >
               <div
                 ref={filmBaseRef}
-                className="absolute inset-0 opacity-0"
+                className="absolute inset-0"
                 style={{ background: FILM_BASE }}
               >
                 <div
@@ -237,7 +169,7 @@ const Gallery = () => {
 
               <div
                 ref={trackRef}
-                className="absolute left-0 top-0 h-full flex items-center will-change-transform opacity-0"
+                className="absolute left-0 top-0 h-full flex items-center will-change-transform"
                 style={{ width: (mobileSource.length * FRAME_W + gutterW) * 2 }}
               >
                 <div className="absolute top-0 left-0 right-0 pointer-events-none" style={{ height: SPROCKET_H, ...SPROCKET_STYLE }} />
@@ -280,49 +212,9 @@ const Gallery = () => {
                   ];
                 })}
               </div>
-
-              <AnimatePresence>
-                {!unrolled && (
-                  <motion.button
-                    key="cta"
-                    ref={ctaRef}
-                    onClick={handleUnroll}
-                    className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-6 bg-luxury-cream/60 backdrop-blur-[2px]"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.4 }}
-                  >
-                    <div className="relative" style={{ width: 200, height: 200 }}>
-                      {stackImages.map((img, i) => (
-                        <div
-                          key={`${img.src}-${i}`}
-                          className="absolute inset-0 overflow-hidden rounded-xl"
-                          style={{
-                            transform: `rotate(${(i - (stackImages.length - 1) / 2) * 7}deg) translateY(${(i - (stackImages.length - 1) / 2) * 10}px)`,
-                            boxShadow: '0 14px 34px rgba(0,0,0,0.32)',
-                            zIndex: i,
-                            background: '#fff',
-                          }}
-                        >
-                          <img src={img.src} alt={img.alt} className="w-full h-full object-cover" draggable={false} />
-                        </div>
-                      ))}
-                    </div>
-                    <div className="flex flex-col items-center gap-2">
-                      <span className="inline-flex items-center gap-2 rounded-full bg-luxury-black text-white text-[10px] uppercase tracking-[0.2em] px-6 py-3 shadow-xl shadow-black/20">
-                        <span className="text-sm">🎎️</span> Tap to Unroll
-                      </span>
-                      <span className="text-[10px] uppercase tracking-[0.3em] text-luxury-accent">Reveal the Journey</span>
-                    </div>
-                  </motion.button>
-                )}
-              </AnimatePresence>
             </div>
 
-            {unrolled && (
-              <p className="text-center mt-5 text-[10px] uppercase tracking-[0.25em] text-gray-400">Swipe the film strip ⟷</p>
-            )}
+            <p className="text-center mt-5 text-[10px] uppercase tracking-[0.25em] text-gray-400">Swipe the film strip ⟷</p>
           </div>
         </div>
       ) : (
