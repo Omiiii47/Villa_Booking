@@ -8,8 +8,6 @@ import { useLandingCms } from '../context/LandingCmsContext';
 import useIsMobile from '../hooks/useIsMobile';
 import { imgUrl } from '../utils/imgUrl';
 
-const DEFAULT_HERO_IMAGE = 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1920&q=85';
-
 const DEFAULT_HERO = {
   eyebrow: 'Extraordinary Stays Await',
   titleLine1: 'Where Luxury',
@@ -24,21 +22,23 @@ const Hero = () => {
   const { landing } = useLandingCms();
   const isMobile = useIsMobile();
   const hero = (isMobile ? landing?.mobile : landing?.desktop)?.hero || DEFAULT_HERO;
-  const heroImage = imgUrl(hero.image) || DEFAULT_HERO_IMAGE;
+  const heroImage = imgUrl(hero.image);
   const { scrollYProgress } = useScroll({ target: ref, offset: ['start start', 'end start'] });
   const bgY = useTransform(scrollYProgress, [0, 1], ['0%', '25%']);
   const opacity = useTransform(scrollYProgress, [0, 0.7], [1, 0]);
   const scale = useTransform(scrollYProgress, [0, 1], [1, 1.1]);
 
   return (
-    <section ref={ref} className="relative h-screen min-h-[750px] flex items-center justify-center overflow-hidden">
+    <section ref={ref} className="relative h-screen min-h-[750px] flex items-center justify-center overflow-hidden bg-luxury-black">
       <motion.div className="absolute inset-0" style={{ y: bgY }}>
-        <motion.img
-          src={heroImage}
-          alt="Luxury villa"
-          className="w-full h-[120%] object-cover"
-          style={{ scale }}
-        />
+        {heroImage && (
+          <motion.img
+            src={heroImage}
+            alt={hero.eyebrow || 'Luxury villa'}
+            className="w-full h-[120%] object-cover"
+            style={{ scale }}
+          />
+        )}
         <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/20 to-black/70" />
       </motion.div>
 

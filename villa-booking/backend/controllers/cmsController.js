@@ -14,35 +14,35 @@ const HERO_DEFAULT = {
     "Discover an exclusive collection of handpicked villas nestled in the world's most breathtaking destinations.",
   ctaPrimary: 'Explore Villas',
   ctaSecondary: 'Discover More',
-  image: img('https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1920&q=85'),
+  image: img(''),
 };
 
 const SHOWCASE_ITEMS = [
   {
     name: 'The Grand Horizon', slug: 'the-grand-horizon',
-    image: img('https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800'),
+    image: img(''),
     tag: 'Oceanfront', price: '$2,500', desc: 'A breathtaking cliffside retreat with panoramic ocean views',
   },
   {
     name: 'Azure Cove Villa', slug: 'azure-cove-villa',
-    image: img('https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800'),
+    image: img(''),
     tag: 'Beachfront', price: '$3,200', desc: 'Private beachfront paradise with crystalline waters',
   },
   {
     name: 'The Emerald Canopy', slug: 'the-emerald-canopy',
-    image: img('https://images.unsplash.com/photo-1615571022219-eb45cf7faa36?w=800'),
+    image: img(''),
     tag: 'Rainforest', price: '$1,800', desc: 'A treetop sanctuary immersed in ancient rainforest',
   },
 ];
 
 const GALLERY_IMAGES = [
-  { image: img('https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1200&q=80'), alt: 'The Grand Horizon', location: 'Cliffside Bay, Maldives', size: 'md' },
-  { image: img('https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=1200&q=80'), alt: 'Infinity Serenity', location: 'Azure Coast, Greece', size: 'sm' },
-  { image: img('https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?w=1200&q=80'), alt: 'Sunset Pavilion', location: 'Tuscany, Italy', size: 'sm' },
-  { image: img('https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1200&q=80'), alt: 'Azure Cove', location: 'Private Beach, Seychelles', size: 'md' },
-  { image: img('https://images.unsplash.com/photo-1600585153490-76fb20a32601?w=1200&q=80'), alt: 'Golden Hour Lounge', location: 'Coastal Ridge, Bali', size: 'sm' },
-  { image: img('https://images.unsplash.com/photo-1615571022219-eb45cf7faa36?w=1200&q=80'), alt: 'Canopy Haven', location: 'Rainforest Reserve, Costa Rica', size: 'sm' },
-  { image: img('https://images.unsplash.com/photo-1600573472591-ee6b68d14c68?w=1200&q=80'), alt: 'Crystal Baths', location: 'Alpine Retreat, Switzerland', size: 'md' },
+  { image: img(''), alt: 'The Grand Horizon', location: 'Cliffside Bay, Maldives', size: 'md' },
+  { image: img(''), alt: 'Infinity Serenity', location: 'Azure Coast, Greece', size: 'sm' },
+  { image: img(''), alt: 'Sunset Pavilion', location: 'Tuscany, Italy', size: 'sm' },
+  { image: img(''), alt: 'Azure Cove', location: 'Private Beach, Seychelles', size: 'md' },
+  { image: img(''), alt: 'Golden Hour Lounge', location: 'Coastal Ridge, Bali', size: 'sm' },
+  { image: img(''), alt: 'Canopy Haven', location: 'Rainforest Reserve, Costa Rica', size: 'sm' },
+  { image: img(''), alt: 'Crystal Baths', location: 'Alpine Retreat, Switzerland', size: 'md' },
 ];
 
 const AMENITY_ITEMS = [

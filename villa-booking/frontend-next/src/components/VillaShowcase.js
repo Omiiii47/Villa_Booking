@@ -11,17 +11,17 @@ import { imgUrl } from '../utils/imgUrl';
 const DEFAULT_VILLAS = [
   {
     name: 'The Grand Horizon', slug: 'the-grand-horizon',
-    image: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800',
+    image: '',
     tag: 'Oceanfront', price: '$2,500', desc: 'A breathtaking cliffside retreat with panoramic ocean views',
   },
   {
     name: 'Azure Cove Villa', slug: 'azure-cove-villa',
-    image: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800',
+    image: '',
     tag: 'Beachfront', price: '$3,200', desc: 'Private beachfront paradise with crystalline waters',
   },
   {
     name: 'The Emerald Canopy', slug: 'the-emerald-canopy',
-    image: 'https://images.unsplash.com/photo-1615571022219-eb45cf7faa36?w=800',
+    image: '',
     tag: 'Rainforest', price: '$1,800', desc: 'A treetop sanctuary immersed in ancient rainforest',
   },
 ];
@@ -31,6 +31,7 @@ const VillaCard = ({ villa, i }) => {
   const { scrollYProgress } = useScroll({ target: cardRef, offset: ['start end', 'end start'] });
   const imageY = useTransform(scrollYProgress, [0, 1], ['-4%', '4%']);
   const imageScale = useTransform(scrollYProgress, [0, 0.5, 1], [1.12, 1.0, 1.08]);
+  const imageSrc = imgUrl(villa.image);
 
   return (
     <motion.div
@@ -42,25 +43,27 @@ const VillaCard = ({ villa, i }) => {
       whileHover={{ y: -8 }}
       className="group relative h-[420px] rounded-2xl overflow-hidden cursor-pointer bg-luxury-black"
     >
-      <motion.div style={{ y: imageY }} className="absolute inset-0 will-change-transform">
-        <motion.div
-          className="w-full h-full"
-          style={{ scale: imageScale }}
-          initial={{ scale: 1.12 }}
-          whileInView={{ scale: 1 }}
-          viewport={{ once: true }}
-          transition={{ duration: 1.2, ease: [0.25, 0.46, 0.45, 0.94] }}
-        >
-          <motion.img
-            src={imgUrl(villa.image)}
-            alt={villa.name}
-            className="w-full h-full object-cover"
-            animate={{ scale: [1, 1.03, 1] }}
-            transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
-            whileHover={{ scale: 1.08 }}
-          />
+      {imageSrc && (
+        <motion.div style={{ y: imageY }} className="absolute inset-0 will-change-transform">
+          <motion.div
+            className="w-full h-full"
+            style={{ scale: imageScale }}
+            initial={{ scale: 1.12 }}
+            whileInView={{ scale: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 1.2, ease: [0.25, 0.46, 0.45, 0.94] }}
+          >
+            <motion.img
+              src={imageSrc}
+              alt={villa.name}
+              className="w-full h-full object-cover"
+              animate={{ scale: [1, 1.03, 1] }}
+              transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
+              whileHover={{ scale: 1.08 }}
+            />
+          </motion.div>
         </motion.div>
-      </motion.div>
+      )}
       <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
       <motion.div
         initial={{ opacity: 0, y: 20 }}

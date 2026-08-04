@@ -27,13 +27,13 @@ const SPROCKET_STYLE = {
 };
 
 const DEFAULT_IMAGES = [
-  { src: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1200&q=80', alt: 'The Grand Horizon', location: 'Cliffside Bay, Maldives', size: 'md' },
-  { src: 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=1200&q=80', alt: 'Infinity Serenity', location: 'Azure Coast, Greece', size: 'sm' },
-  { src: 'https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?w=1200&q=80', alt: 'Sunset Pavilion', location: 'Tuscany, Italy', size: 'sm' },
-  { src: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1200&q=80', alt: 'Azure Cove', location: 'Private Beach, Seychelles', size: 'md' },
-  { src: 'https://images.unsplash.com/photo-1600585153490-76fb20a32601?w=1200&q=80', alt: 'Golden Hour Lounge', location: 'Coastal Ridge, Bali', size: 'sm' },
-  { src: 'https://images.unsplash.com/photo-1615571022219-eb45cf7faa36?w=1200&q=80', alt: 'Canopy Haven', location: 'Rainforest Reserve, Costa Rica', size: 'sm' },
-  { src: 'https://images.unsplash.com/photo-1600573472591-ee6b68d14c68?w=1200&q=80', alt: 'Crystal Baths', location: 'Alpine Retreat, Switzerland', size: 'md' },
+  { src: '', alt: 'The Grand Horizon', location: 'Cliffside Bay, Maldives', size: 'md' },
+  { src: '', alt: 'Infinity Serenity', location: 'Azure Coast, Greece', size: 'sm' },
+  { src: '', alt: 'Sunset Pavilion', location: 'Tuscany, Italy', size: 'sm' },
+  { src: '', alt: 'Azure Cove', location: 'Private Beach, Seychelles', size: 'md' },
+  { src: '', alt: 'Golden Hour Lounge', location: 'Coastal Ridge, Bali', size: 'sm' },
+  { src: '', alt: 'Canopy Haven', location: 'Rainforest Reserve, Costa Rica', size: 'sm' },
+  { src: '', alt: 'Crystal Baths', location: 'Alpine Retreat, Switzerland', size: 'md' },
 ];
 
 const itemVariants = {
@@ -200,14 +200,16 @@ const Gallery = () => {
                               boxShadow: '0 3px 10px rgba(0,0,0,0.45), inset 0 0 0 1px rgba(255,255,255,0.08)',
                             }}
                           >
-                            <img
-                              src={srcOf(img)}
-                              alt={img.alt}
-                              className="w-full h-full object-cover"
-                              loading={i < 2 ? 'eager' : 'lazy'}
-                              draggable={false}
-                              onClick={() => setLightbox(i % mobileSource.length)}
-                            />
+                            {srcOf(img) && (
+                              <img
+                                src={srcOf(img)}
+                                alt={img.alt}
+                                className="w-full h-full object-cover"
+                                loading={i < 2 ? 'eager' : 'lazy'}
+                                draggable={false}
+                                onClick={() => setLightbox(i % mobileSource.length)}
+                              />
+                            )}
                           </div>
                         </div>
                       );
@@ -248,7 +250,9 @@ const Gallery = () => {
                     img.size === 'md' ? 'col-span-2 row-span-2' : 'col-span-1 row-span-1'
                   }`}
                 >
-                  <img src={srcOf(img)} alt={img.alt} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" loading={i < 2 ? 'eager' : 'lazy'} />
+                  {srcOf(img) && (
+                    <img src={srcOf(img)} alt={img.alt} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" loading={i < 2 ? 'eager' : 'lazy'} />
+                  )}
                   <motion.div
                     initial={{ opacity: 0 }}
                     whileHover={{ opacity: 1 }}
@@ -294,17 +298,19 @@ const Gallery = () => {
               className="absolute right-6 top-1/2 -translate-y-1/2 text-white/50 hover:text-white text-2xl z-10 transition-colors">
               <FaChevronRight />
             </button>
-            <motion.img
-              key={lightbox}
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.8, opacity: 0 }}
-              transition={{ type: 'spring', stiffness: 120, damping: 20 }}
-              src={srcOf(lightboxImages[lightbox % lightboxImages.length])}
-              alt={lightboxImages[lightbox % lightboxImages.length].alt}
-              className="max-h-[85vh] max-w-[90vw] object-contain rounded-2xl"
-              onClick={(e) => e.stopPropagation()}
-            />
+            {srcOf(lightboxImages[lightbox % lightboxImages.length]) && (
+              <motion.img
+                key={lightbox}
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.8, opacity: 0 }}
+                transition={{ type: 'spring', stiffness: 120, damping: 20 }}
+                src={srcOf(lightboxImages[lightbox % lightboxImages.length])}
+                alt={lightboxImages[lightbox % lightboxImages.length].alt}
+                className="max-h-[85vh] max-w-[90vw] object-contain rounded-2xl"
+                onClick={(e) => e.stopPropagation()}
+              />
+            )}
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
