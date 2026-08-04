@@ -1,8 +1,10 @@
 ﻿'use client'
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useLandingCms } from '../context/LandingCmsContext';
+import useIsMobile from '../hooks/useIsMobile';
 
-const faqs = [
+const DEFAULT_FAQS = [
   { q: 'What is the booking process?', a: 'Simply browse our collection, select your desired villa and dates, and complete your booking online. A member of our concierge team will confirm your reservation within 24 hours.' },
   { q: 'Can I modify or cancel my booking?', a: 'Yes, modifications and cancellations are subject to our flexible policy. Full refunds are available up to 14 days before check-in, with partial refunds thereafter.' },
   { q: 'Are meals included in the villa price?', a: 'The villa price includes accommodation only. However, we offer private chef services, grocery pre-stocking, and local restaurant reservations upon request.' },
@@ -12,15 +14,19 @@ const faqs = [
 ];
 
 const FAQ = () => {
+  const { landing } = useLandingCms();
+  const isMobile = useIsMobile();
+  const faqsData = (isMobile ? landing?.mobile : landing?.desktop)?.faqs || {};
+  const faqs = faqsData.items?.length ? faqsData.items : DEFAULT_FAQS;
   const [open, setOpen] = useState(null);
 
   return (
     <section className="section-padding bg-luxury-cream">
       <div className="luxury-container">
         <motion.div initial={{ opacity: 0, y: 40 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-16">
-          <span className="section-label">FAQ</span>
-          <h2 className="section-title mb-4">Frequently Asked Questions</h2>
-          <p className="section-subtitle mx-auto">Everything you need to know about booking your dream villa.</p>
+          <span className="section-label">{faqsData.label || 'FAQ'}</span>
+          <h2 className="section-title mb-4">{faqsData.title || 'Frequently Asked Questions'}</h2>
+          <p className="section-subtitle mx-auto">{faqsData.subtitle || 'Everything you need to know about booking your dream villa.'}</p>
         </motion.div>
         <div className="max-w-3xl mx-auto space-y-3">
           {faqs.map((faq, i) => (

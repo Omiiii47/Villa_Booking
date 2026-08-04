@@ -4,18 +4,14 @@ const {
   getUserBookings,
   getBookingById,
   cancelBooking,
-  getAllBookings,
-  updateBookingStatus,
 } = require('../controllers/bookingController');
-const { protect, admin } = require('../middleware/auth');
+const { userProtect } = require('../middleware/userAuth');
 
 const router = express.Router();
 
-router.post('/', protect, createBooking);
-router.get('/', protect, getUserBookings);
-router.get('/all', protect, admin, getAllBookings);
-router.get('/:id', protect, getBookingById);
-router.put('/:id/cancel', protect, cancelBooking);
-router.put('/:id/status', protect, admin, updateBookingStatus);
+router.post('/', userProtect, createBooking);
+router.get('/', userProtect, getUserBookings);
+router.get('/:id', userProtect, getBookingById);
+router.put('/:id/cancel', userProtect, cancelBooking);
 
 module.exports = router;

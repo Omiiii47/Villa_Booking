@@ -1,4 +1,5 @@
 ﻿'use client'
+import { LandingCmsProvider } from '../context/LandingCmsContext';
 import Hero from '../components/Hero';
 import VillaShowcase from '../components/VillaShowcase';
 import Gallery from '../components/Gallery';
@@ -9,7 +10,7 @@ import FAQ from '../components/FAQ';
 import Newsletter from '../components/Newsletter';
 
 const Home = () => (
-  <>
+  <LandingCmsProvider>
     <Hero />
     <VillaShowcase />
     <Gallery />
@@ -18,8 +19,7 @@ const Home = () => (
     <Testimonials />
     <FAQ />
     <Newsletter />
-  </>
+  </LandingCmsProvider>
 );
 
 export default Home;
-

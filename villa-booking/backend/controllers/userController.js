@@ -27,22 +27,6 @@ const getUserById = async (req, res) => {
   }
 };
 
-const updateUserRole = async (req, res) => {
-  try {
-    const user = await User.findByIdAndUpdate(
-      req.params.id,
-      { role: req.body.role },
-      { new: true }
-    ).select('-password');
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-    res.json(user);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
 const deleteUser = async (req, res) => {
   try {
     const user = await User.findByIdAndDelete(req.params.id);
@@ -55,4 +39,4 @@ const deleteUser = async (req, res) => {
   }
 };
 
-module.exports = { getUsers, getUserById, updateUserRole, deleteUser };
+module.exports = { getUsers, getUserById, deleteUser };

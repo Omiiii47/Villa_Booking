@@ -3,7 +3,8 @@ import { useRef, useEffect, useState, useMemo } from 'react';
 import { gsap } from 'gsap';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaTimes, FaChevronLeft, FaChevronRight, FaExpand } from 'react-icons/fa';
-import useSiteContent from '../hooks/useSiteContent';
+import { useLandingCms } from '../context/LandingCmsContext';
+import { imgUrl } from '../utils/imgUrl';
 
 const FRAME_W = 220;
 const PHOTO_H = 200;
@@ -52,8 +53,10 @@ const Gallery = () => {
   const [isMobile, setIsMobile] = useState(false);
   const [gutterW, setGutterW] = useState(0);
 
-  const siteContent = useSiteContent();
-  const galleryImages = siteContent?.gallery?.length ? siteContent.gallery : DEFAULT_IMAGES;
+  const { landing } = useLandingCms();
+  const galleryData = (isMobile ? landing?.mobile : landing?.desktop)?.gallery || {};
+  const galleryImages = galleryData.images?.length ? galleryData.images : (galleryData.items?.length ? galleryData.items : DEFAULT_IMAGES);
+  const srcOf = (img) => imgUrl(img.image || img.src);
   const desktopImages = galleryImages.length > 6 ? galleryImages.filter((_, i) => i !== 6) : galleryImages;
   const mobileSource = useMemo(() => galleryImages.slice(0, Math.min(6, galleryImages.length)), [galleryImages]);
   const images = desktopImages;
@@ -143,9 +146,9 @@ const Gallery = () => {
       {isMobile ? (
         <div className="relative bg-luxury-cream">
           <div className="luxury-container text-center pt-14 pb-6">
-            <span className="section-label">Gallery</span>
-            <h2 className="section-title mb-3">A Visual Journey</h2>
-            <p className="section-subtitle mx-auto">Explore the beauty and elegance that awaits at our handpicked destinations.</p>
+            <span className="section-label">{galleryData.label || 'Gallery'}</span>
+            <h2 className="section-title mb-3">{galleryData.title || 'A Visual Journey'}</h2>
+            <p className="section-subtitle mx-auto">{galleryData.subtitle || 'Explore the beauty and elegance that awaits at our handpicked destinations.'}</p>
           </div>
 
           <div className="px-6 pb-14">
@@ -183,7 +186,7 @@ const Gallery = () => {
                       const idx = base + i;
                       return (
                         <div
-                          key={`${img.src}-${idx}`}
+                          key={`${srcOf(img)}-${idx}`}
                           ref={(el) => { frameRefs.current[idx] = el; }}
                           className="relative shrink-0 cursor-pointer"
                           style={{ width: FRAME_W, padding: '3px 2px' }}
@@ -198,7 +201,7 @@ const Gallery = () => {
                             }}
                           >
                             <img
-                              src={img.src}
+                              src={srcOf(img)}
                               alt={img.alt}
                               className="w-full h-full object-cover"
                               loading={i < 2 ? 'eager' : 'lazy'}
@@ -224,9 +227,9 @@ const Gallery = () => {
               viewport={{ once: true }}
               className="text-center mb-12"
             >
-              <span className="section-label">Gallery</span>
-              <h2 className="section-title mt-2">A Visual Journey</h2>
-              <p className="section-subtitle mx-auto mt-4">Explore the beauty and elegance that awaits at our handpicked destinations.</p>
+              <span className="section-label">{galleryData.label || 'Gallery'}</span>
+              <h2 className="section-title mt-2">{galleryData.title || 'A Visual Journey'}</h2>
+              <p className="section-subtitle mx-auto mt-4">{galleryData.subtitle || 'Explore the beauty and elegance that awaits at our handpicked destinations.'}</p>
             </motion.div>
 
             <motion.div
@@ -245,7 +248,7 @@ const Gallery = () => {
                     img.size === 'md' ? 'col-span-2 row-span-2' : 'col-span-1 row-span-1'
                   }`}
                 >
-                  <img src={img.src} alt={img.alt} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" loading={i < 2 ? 'eager' : 'lazy'} />
+                  <img src={srcOf(img)} alt={img.alt} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" loading={i < 2 ? 'eager' : 'lazy'} />
                   <motion.div
                     initial={{ opacity: 0 }}
                     whileHover={{ opacity: 1 }}
@@ -297,7 +300,7 @@ const Gallery = () => {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.8, opacity: 0 }}
               transition={{ type: 'spring', stiffness: 120, damping: 20 }}
-              src={lightboxImages[lightbox % lightboxImages.length].src}
+              src={srcOf(lightboxImages[lightbox % lightboxImages.length])}
               alt={lightboxImages[lightbox % lightboxImages.length].alt}
               className="max-h-[85vh] max-w-[90vw] object-contain rounded-2xl"
               onClick={(e) => e.stopPropagation()}

@@ -1,18 +1,16 @@
 ﻿'use client'
 import { useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { FaUser, FaCalendarAlt, FaHeart, FaSignOutAlt, FaShieldAlt, FaClock, FaEnvelope } from 'react-icons/fa';
-import { useAuth } from '../context/AuthContext';
+import { useUserAuth } from '../context/UserAuthContext';
 import { useWishlist } from '../context/WishlistContext';
 
 const Dashboard = () => {
-  const { user, logout } = useAuth();
-  const router = useRouter();
+  const { user, logout } = useUserAuth();
   const { wishlist, fetchWishlist } = useWishlist();
 
-  useEffect(() => { if (!user) { router.push('/login'); return; } fetchWishlist(); }, [user, router, fetchWishlist]);
+  useEffect(() => { if (user) fetchWishlist(); }, [user, fetchWishlist]);
   if (!user) return null;
 
   const tabs = [
@@ -56,7 +54,7 @@ const Dashboard = () => {
                   { icon: FaUser, label: 'Full Name', value: user.name },
                   { icon: FaEnvelope, label: 'Email', value: user.email },
                   { icon: FaShieldAlt, label: 'Membership', value: 'Premium Member' },
-                  { icon: FaClock, label: 'Role', value: user.role },
+                  { icon: FaClock, label: 'Account', value: 'Member' },
                 ].map((item, i) => (
                   <motion.div key={item.label} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 + i * 0.05 }}
                     className="bg-luxury-cream rounded-2xl p-5">

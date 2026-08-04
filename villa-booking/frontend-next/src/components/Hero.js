@@ -4,14 +4,27 @@ import { motion, useScroll, useTransform } from 'framer-motion';
 import Link from 'next/link';
 import Magnetic from './Magnetic';
 import WordSplit from './SplitText';
-import useSiteContent from '../hooks/useSiteContent';
+import { useLandingCms } from '../context/LandingCmsContext';
+import useIsMobile from '../hooks/useIsMobile';
+import { imgUrl } from '../utils/imgUrl';
 
 const DEFAULT_HERO_IMAGE = 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1920&q=85';
 
+const DEFAULT_HERO = {
+  eyebrow: 'Extraordinary Stays Await',
+  titleLine1: 'Where Luxury',
+  titleLine2: 'Meets Nature',
+  subtitle: "Discover an exclusive collection of handpicked villas nestled in the world's most breathtaking destinations.",
+  ctaPrimary: 'Explore Villas',
+  ctaSecondary: 'Discover More',
+};
+
 const Hero = () => {
   const ref = useRef(null);
-  const siteContent = useSiteContent();
-  const heroImage = siteContent?.heroImage || DEFAULT_HERO_IMAGE;
+  const { landing } = useLandingCms();
+  const isMobile = useIsMobile();
+  const hero = (isMobile ? landing?.mobile : landing?.desktop)?.hero || DEFAULT_HERO;
+  const heroImage = imgUrl(hero.image) || DEFAULT_HERO_IMAGE;
   const { scrollYProgress } = useScroll({ target: ref, offset: ['start start', 'end start'] });
   const bgY = useTransform(scrollYProgress, [0, 1], ['0%', '25%']);
   const opacity = useTransform(scrollYProgress, [0, 0.7], [1, 0]);
@@ -46,13 +59,13 @@ const Hero = () => {
           className="mb-6"
         >
           <span className="inline-block font-body text-[10px] md:text-xs uppercase tracking-[0.3em] text-luxury-accent bg-white/10 backdrop-blur-md px-6 py-2 rounded-full">
-            Extraordinary Stays Await
+            {hero.eyebrow}
           </span>
         </motion.div>
 
         <h1 className="font-display text-hero text-white leading-[0.95] mb-8">
-          <WordSplit text="Where Luxury" stagger={0.04} className="block" />
-          <WordSplit text="Meets Nature" stagger={0.04} delay={0.4} className="block italic font-light mt-2" />
+          <WordSplit text={hero.titleLine1} stagger={0.04} className="block" />
+          <WordSplit text={hero.titleLine2} stagger={0.04} delay={0.4} className="block italic font-light mt-2" />
         </h1>
 
         <motion.p
@@ -61,7 +74,7 @@ const Hero = () => {
           transition={{ delay: 1.0, duration: 0.8 }}
           className="text-white/70 text-base md:text-lg font-light max-w-xl mx-auto mb-12 leading-relaxed"
         >
-          Discover an exclusive collection of handpicked villas nestled in the world's most breathtaking destinations.
+          {hero.subtitle}
         </motion.p>
 
         <motion.div
@@ -72,7 +85,7 @@ const Hero = () => {
         >
           <Magnetic>
             <Link href="/villas" className="btn-primary !bg-white !text-luxury-black hover:!text-white !px-12">
-              <span>Explore Villas</span>
+              <span>{hero.ctaPrimary}</span>
               <svg className="w-4 h-4 relative z-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M5 12h14M12 5l7 7-7 7" />
               </svg>
@@ -80,7 +93,7 @@ const Hero = () => {
           </Magnetic>
           <Magnetic>
             <Link href="/about" className="btn-outline !border-white !text-white hover:!text-white !px-12">
-              <span>Discover More</span>
+              <span>{hero.ctaSecondary}</span>
             </Link>
           </Magnetic>
         </motion.div>

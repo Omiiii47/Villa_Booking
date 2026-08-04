@@ -1,4 +1,5 @@
 ﻿import api from './api';
+import userApi from './userApi';
 
 export const getVillaReviews = async (villaId) => {
   const { data } = await api.get(`/reviews/villa/${villaId}`);
@@ -6,6 +7,6 @@ export const getVillaReviews = async (villaId) => {
 };
 
 export const createReview = async (villaId, reviewData) => {
-  const { data } = await api.post(`/reviews/villa/${villaId}`, reviewData);
+  const { data } = await userApi.post(`/reviews/villa/${villaId}`, reviewData);
   return data;
 };

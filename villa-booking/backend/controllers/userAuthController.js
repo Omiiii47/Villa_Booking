@@ -2,7 +2,7 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 
 const generateToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRE });
+  return jwt.sign({ id, type: 'user' }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRE });
 };
 
 const register = async (req, res) => {
@@ -20,7 +20,6 @@ const register = async (req, res) => {
       _id: user._id,
       name: user.name,
       email: user.email,
-      role: user.role,
       avatar: user.avatar,
       wishlist: user.wishlist,
       token: generateToken(user._id),
@@ -48,7 +47,6 @@ const login = async (req, res) => {
       _id: user._id,
       name: user.name,
       email: user.email,
-      role: user.role,
       avatar: user.avatar,
       wishlist: user.wishlist,
       token: generateToken(user._id),
@@ -88,7 +86,6 @@ const updateProfile = async (req, res) => {
       _id: updatedUser._id,
       name: updatedUser.name,
       email: updatedUser.email,
-      role: updatedUser.role,
       avatar: updatedUser.avatar,
       wishlist: updatedUser.wishlist,
       token: generateToken(updatedUser._id),

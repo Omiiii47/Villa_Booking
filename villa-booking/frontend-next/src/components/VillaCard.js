@@ -4,9 +4,9 @@ import { motion, useMotionValue, useSpring } from 'framer-motion';
 import Link from 'next/link';
 import { FaStar, FaArrowRight } from 'react-icons/fa';
 import { useWishlist } from '../context/WishlistContext';
-import { useAuth } from '../context/AuthContext';
+import { useUserAuth } from '../context/UserAuthContext';
 const VillaCard = ({ villa, index = 0 }) => {
-  const { user } = useAuth();
+  const { user } = useUserAuth();
   const { isInWishlist, toggle } = useWishlist();
   const ref = useRef(null);
   const x = useMotionValue(0);

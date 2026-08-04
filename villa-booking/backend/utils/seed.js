@@ -5,7 +5,7 @@ const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 const Villa = require('../models/Villa');
 const Amenity = require('../models/Amenity');
-const User = require('../models/User');
+const Admin = require('../models/Admin');
 
 dotenv.config();
 
@@ -198,13 +198,12 @@ const seedDB = async () => {
     await Villa.create(villas.map(v => ({ ...v, slug: slugify(v.name) })));
     await Amenity.insertMany(amenities);
 
-    const adminExists = await User.findOne({ email: 'admin@villabooking.com' });
+    const adminExists = await Admin.findOne({ email: 'admin@villabooking.com' });
     if (!adminExists) {
-      await User.create({
+      await Admin.create({
         name: 'Admin',
         email: 'admin@villabooking.com',
         password: 'admin123',
-        role: 'admin',
       });
     }
 

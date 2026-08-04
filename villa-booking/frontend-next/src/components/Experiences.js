@@ -1,15 +1,17 @@
 ﻿'use client'
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { FaCompass, FaUtensils, FaSpa, FaCamera, FaWineGlassAlt, FaMountain } from 'react-icons/fa';
+import { useLandingCms } from '../context/LandingCmsContext';
+import useIsMobile from '../hooks/useIsMobile';
+import { getLandingIcon } from '../constants/landingIcons';
 
-const items = [
-  { icon: FaCompass, title: 'Guided Explorations', desc: 'Curated excursions led by local experts to hidden gems and breathtaking viewpoints.' },
-  { icon: FaUtensils, title: 'Gourmet Dining', desc: 'Private chef experiences featuring locally-sourced ingredients and seasonal menus.' },
-  { icon: FaSpa, title: 'Wellness Retreats', desc: 'Holistic wellness programs including yoga, meditation, and spa treatments.' },
-  { icon: FaCamera, title: 'Photography Tours', desc: 'Capture unforgettable moments with professional photographer guides.' },
-  { icon: FaWineGlassAlt, title: 'Wine Tastings', desc: 'Exclusive tastings of regional wines in stunning cellars and vineyards.' },
-  { icon: FaMountain, title: 'Adventure Sports', desc: 'From hiking to water sports, curated adventures for every thrill level.' },
+const DEFAULT_ITEMS = [
+  { icon: 'FaCompass', title: 'Guided Explorations', desc: 'Curated excursions led by local experts to hidden gems and breathtaking viewpoints.' },
+  { icon: 'FaUtensils', title: 'Gourmet Dining', desc: 'Private chef experiences featuring locally-sourced ingredients and seasonal menus.' },
+  { icon: 'FaSpa', title: 'Wellness Retreats', desc: 'Holistic wellness programs including yoga, meditation, and spa treatments.' },
+  { icon: 'FaCamera', title: 'Photography Tours', desc: 'Capture unforgettable moments with professional photographer guides.' },
+  { icon: 'FaWineGlassAlt', title: 'Wine Tastings', desc: 'Exclusive tastings of regional wines in stunning cellars and vineyards.' },
+  { icon: 'FaMountain', title: 'Adventure Sports', desc: 'From hiking to water sports, curated adventures for every thrill level.' },
 ];
 
 const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.08 } } };
@@ -19,7 +21,7 @@ const CARD_GAP = 24;
 const LOOP_SECONDS = 22;
 
 const renderExp = (exp) => {
-  const Icon = exp.icon;
+  const Icon = getLandingIcon(exp.icon);
   return (
     <div className="text-center group cursor-default">
       <div className="w-20 h-20 rounded-full bg-white shadow-lg flex items-center justify-center mx-auto mb-6 group-hover:bg-luxury-accent transition-all duration-700">
@@ -31,7 +33,7 @@ const renderExp = (exp) => {
   );
 };
 
-const MobileExperiencesSlider = () => {
+const MobileExperiencesSlider = ({ items }) => {
   const scrollerRef = useRef(null);
   const cardRefs = useRef([]);
   const cards = [...items, ...items];
@@ -95,7 +97,7 @@ const measureRef = useRef(0); // width of one set of cards -> seamless loop boun
       window.removeEventListener('resize', onResize);
       io.disconnect();
     };
-  }, []);
+  }, [items.length]);
 
   return (
     <div ref={scrollerRef}
@@ -124,28 +126,23 @@ const measureRef = useRef(0); // width of one set of cards -> seamless loop boun
 };
 
 const Experiences = () => {
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    const mq = window.matchMedia('(max-width: 768px)');
-    const handler = () => setIsMobile(mq.matches);
-    handler();
-    mq.addEventListener('change', handler);
-    return () => mq.removeEventListener('change', handler);
-  }, []);
+  const { landing } = useLandingCms();
+  const isMobile = useIsMobile();
+  const experiences = (isMobile ? landing?.mobile : landing?.desktop)?.experiences || {};
+  const items = experiences.items?.length ? experiences.items : DEFAULT_ITEMS;
 
   return (
     <section className="section-padding bg-luxury-cream">
       <div className="luxury-container">
         <motion.div initial={{ opacity: 0, y: 40 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-16">
-          <span className="section-label">Experiences</span>
-          <h2 className="section-title mb-4">Beyond The Villa</h2>
-          <p className="section-subtitle mx-auto">Immersive experiences crafted to make your stay truly unforgettable.</p>
+          <span className="section-label">{experiences.label || 'Experiences'}</span>
+          <h2 className="section-title mb-4">{experiences.title || 'Beyond The Villa'}</h2>
+          <p className="section-subtitle mx-auto">{experiences.subtitle || 'Immersive experiences crafted to make your stay truly unforgettable.'}</p>
         </motion.div>
 
         {isMobile ? (
           <div className="-mx-6">
-            <MobileExperiencesSlider />
+            <MobileExperiencesSlider items={items} />
           </div>
         ) : (
           <motion.div variants={container} initial="hidden" whileInView="show" viewport={{ once: true }} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">

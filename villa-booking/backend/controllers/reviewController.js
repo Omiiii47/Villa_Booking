@@ -55,23 +55,25 @@ const deleteReview = async (req, res) => {
       return res.status(404).json({ message: 'Review not found' });
     }
 
-    if (review.user.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+    if (review.user.toString() !== req.user._id.toString()) {
       return res.status(403).json({ message: 'Not authorized' });
     }
 
     const villaId = review.villa;
-    await review.remove();
+    await Review.findByIdAndDelete(req.params.id);
 
     const reviews = await Review.find({ villa: villaId });
     const villa = await Villa.findById(villaId);
-    if (reviews.length > 0) {
-      const avgRating = reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length;
-      villa.rating = Math.round(avgRating * 10) / 10;
-    } else {
-      villa.rating = 0;
+    if (villa) {
+      if (reviews.length > 0) {
+        const avgRating = reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length;
+        villa.rating = Math.round(avgRating * 10) / 10;
+      } else {
+        villa.rating = 0;
+      }
+      villa.numReviews = reviews.length;
+      await villa.save();
     }
-    villa.numReviews = reviews.length;
-    await villa.save();
 
     res.json({ message: 'Review removed' });
   } catch (error) {

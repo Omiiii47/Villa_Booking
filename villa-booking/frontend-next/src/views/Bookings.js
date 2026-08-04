@@ -1,10 +1,9 @@
 ﻿'use client'
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { FaCalendarAlt, FaMapMarkerAlt, FaTimes } from 'react-icons/fa';
-import { useAuth } from '../context/AuthContext';
+import { useUserAuth } from '../context/UserAuthContext';
 import { getUserBookings, cancelBooking } from '../services/bookingService';
 
 const statusColors = {
@@ -22,19 +21,18 @@ const statusLabels = {
 };
 
 const BookingsPage = () => {
-  const { user } = useAuth();
-  const router = useRouter();
+  const { user } = useUserAuth();
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user) { router.push('/login'); return; }
+    if (!user) return;
     const fetch = async () => {
       try { setBookings(await getUserBookings()); } catch { setBookings([]); }
       setLoading(false);
     };
     fetch();
-  }, [user, router]);
+  }, [user]);
 
   const handleCancel = async (id) => {
     if (!window.confirm('Are you sure you want to cancel this booking?')) return;

@@ -1,20 +1,21 @@
-﻿import { createContext, useContext, useState, useEffect } from 'react';
-import { loginUser, registerUser, logout as logoutService } from '../services/authService';
+'use client'
+import { createContext, useContext, useState, useEffect } from 'react';
+import { loginUser, registerUser, logout as logoutService } from '../services/userAuthService';
 
-const AuthContext = createContext();
+const UserAuthContext = createContext();
 
-export const useAuth = () => useContext(AuthContext);
+export const useUserAuth = () => useContext(UserAuthContext);
 
-export const AuthProvider = ({ children }) => {
+export const UserAuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const stored = localStorage.getItem('villaUser');
+    const stored = localStorage.getItem('solscapeUser');
     if (stored) {
       try {
         setUser(JSON.parse(stored));
-      } catch { localStorage.removeItem('villaUser'); }
+      } catch { localStorage.removeItem('solscapeUser'); }
     }
     setLoading(false);
   }, []);
@@ -37,8 +38,8 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, setUser }}>
+    <UserAuthContext.Provider value={{ user, loading, login, register, logout, setUser }}>
       {children}
-    </AuthContext.Provider>
+    </UserAuthContext.Provider>
   );
 };

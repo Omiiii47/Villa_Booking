@@ -21,13 +21,14 @@ app.use(express.urlencoded({ extended: false }));
 
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-app.use('/api/auth', require('./routes/authRoutes'));
+app.use('/api/auth', require('./routes/userAuthRoutes'));
+app.use('/api/admin-auth', require('./routes/adminAuthRoutes'));
 app.use('/api/villas', require('./routes/villaRoutes'));
 app.use('/api/bookings', require('./routes/bookingRoutes'));
 app.use('/api/reviews', require('./routes/reviewRoutes'));
 app.use('/api/users', require('./routes/userRoutes'));
 app.use('/api/contact', require('./routes/contactRoutes'));
-app.use('/api/site-content', require('./routes/siteContentRoutes'));
+app.use('/api/cms', require('./routes/cmsRoutes'));
 app.use('/api/admin', require('./routes/adminRoutes'));
 
 app.get('/api/health', (req, res) => {

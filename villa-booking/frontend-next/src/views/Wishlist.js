@@ -1,27 +1,25 @@
 ﻿'use client'
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { FaHeart } from 'react-icons/fa';
-import { useAuth } from '../context/AuthContext';
-import { getWishlist } from '../services/authService';
+import { useUserAuth } from '../context/UserAuthContext';
+import { getWishlist } from '../services/userAuthService';
 import VillaCard from '../components/VillaCard';
 
 const WishlistPage = () => {
-  const { user } = useAuth();
-  const router = useRouter();
+  const { user } = useUserAuth();
   const [villas, setVillas] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user) { router.push('/login'); return; }
+    if (!user) return;
     const fetch = async () => {
       try { setVillas(await getWishlist()); } catch { setVillas([]); }
       setLoading(false);
     };
     fetch();
-  }, [user, router]);
+  }, [user]);
 
   if (!user) return null;
 

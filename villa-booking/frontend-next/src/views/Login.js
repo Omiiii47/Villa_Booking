@@ -4,10 +4,10 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { FaEnvelope, FaLock, FaEye, FaEyeSlash } from 'react-icons/fa';
-import { useAuth } from '../context/AuthContext';
+import { useUserAuth } from '../context/UserAuthContext';
 
 const Login = () => {
-  const { login } = useAuth();
+  const { login } = useUserAuth();
   const router = useRouter();
   const [form, setForm] = useState({ email: '', password: '' });
   const [error, setError] = useState('');

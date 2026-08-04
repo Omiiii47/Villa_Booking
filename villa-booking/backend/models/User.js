@@ -7,7 +7,6 @@ const userSchema = mongoose.Schema(
     email: { type: String, required: [true, 'Please add an email'], unique: true, lowercase: true },
     password: { type: String, required: [true, 'Please add a password'], minlength: 6, select: false },
     phone: { type: String },
-    role: { type: String, enum: ['user', 'admin'], default: 'user' },
     avatar: { type: String, default: '' },
     wishlist: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Villa' }],
   },

@@ -3,11 +3,11 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useAuth } from '../context/AuthContext';
+import { useUserAuth } from '../context/UserAuthContext';
 import Magnetic from './Magnetic';
 
 const Navbar = () => {
-  const { user, logout } = useAuth();
+  const { user, logout } = useUserAuth();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [hidden, setHidden] = useState(false);
@@ -79,13 +79,6 @@ const Navbar = () => {
               <div className="ml-6 flex items-center gap-3">
                 {user ? (
                   <>
-                    {user.role === 'admin' && (
-                      <Link href="/admin" className={`font-body text-xs uppercase tracking-[0.2em] font-medium transition-colors ${
-                        scrolled ? 'text-luxury-black/70 hover:text-luxury-black' : 'text-white/70 hover:text-white'
-                      }`}>
-                        Admin
-                      </Link>
-                    )}
                     <Link href="/dashboard" className={`font-body text-xs uppercase tracking-[0.2em] font-medium transition-colors ${
                       scrolled ? 'text-luxury-black/70 hover:text-luxury-black' : 'text-white/70 hover:text-white'
                     }`}>
@@ -176,7 +169,6 @@ const Navbar = () => {
               >
                 {user ? (
                   <div className="flex flex-col gap-3">
-                    {user.role === 'admin' && <Link href="/admin" onClick={() => setMobileOpen(false)} className="font-body text-sm uppercase tracking-widest text-luxury-black/60 py-2">Admin</Link>}
                     <Link href="/dashboard" onClick={() => setMobileOpen(false)} className="font-body text-sm uppercase tracking-widest text-luxury-black/60 py-2">Dashboard</Link>
                     <button onClick={() => { logout(); setMobileOpen(false); }} className="btn-primary w-full text-center"><span>Sign Out</span></button>
                   </div>

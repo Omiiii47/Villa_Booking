@@ -1,6 +1,7 @@
 ﻿'use client'
 
 import { Suspense } from 'react';
+import UserGuard from '../../../src/components/guards/UserGuard';
 import Booking from '../../../src/views/Booking';
 
 export default function BookingPage() {
@@ -12,7 +13,9 @@ export default function BookingPage() {
         </div>
       }
     >
-      <Booking />
+      <UserGuard>
+        <Booking />
+      </UserGuard>
     </Suspense>
   );
 }

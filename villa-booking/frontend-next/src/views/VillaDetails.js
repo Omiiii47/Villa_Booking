@@ -6,13 +6,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FaStar, FaMapMarkerAlt, FaChevronLeft, FaChevronRight, FaCheck, FaTimes, FaExpand } from 'react-icons/fa';
 import { getVillaBySlug } from '../services/villaService';
 import { getVillaReviews } from '../services/reviewService';
-import { useAuth } from '../context/AuthContext';
+import { useUserAuth } from '../context/UserAuthContext';
 import { useWishlist } from '../context/WishlistContext';
 import Magnetic from '../components/Magnetic';
 
 const VillaDetails = () => {
   const { slug } = useParams();
-  const { user } = useAuth();
+  const { user } = useUserAuth();
   const { isInWishlist, toggle } = useWishlist();
   const [villa, setVilla] = useState(null);
   const [reviews, setReviews] = useState([]);

@@ -1,7 +1,12 @@
 ﻿'use client'
 
+import UserGuard from '../../../src/components/guards/UserGuard';
 import WishlistPage from '../../../src/views/Wishlist';
 
 export default function WishlistRoute() {
-  return <WishlistPage />;
+  return (
+    <UserGuard>
+      <WishlistPage />
+    </UserGuard>
+  );
 }

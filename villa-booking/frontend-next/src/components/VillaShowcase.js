@@ -4,7 +4,9 @@ import { motion, useScroll, useTransform } from 'framer-motion';
 import { FaArrowRight } from 'react-icons/fa';
 import { useRef } from 'react';
 import Magnetic from './Magnetic';
-import useSiteContent from '../hooks/useSiteContent';
+import { useLandingCms } from '../context/LandingCmsContext';
+import useIsMobile from '../hooks/useIsMobile';
+import { imgUrl } from '../utils/imgUrl';
 
 const DEFAULT_VILLAS = [
   {
@@ -50,7 +52,7 @@ const VillaCard = ({ villa, i }) => {
           transition={{ duration: 1.2, ease: [0.25, 0.46, 0.45, 0.94] }}
         >
           <motion.img
-            src={villa.image}
+            src={imgUrl(villa.image)}
             alt={villa.name}
             className="w-full h-full object-cover"
             animate={{ scale: [1, 1.03, 1] }}
@@ -96,8 +98,10 @@ const VillaCard = ({ villa, i }) => {
 };
 
 const VillaShowcase = () => {
-  const siteContent = useSiteContent();
-  const villas = (siteContent?.showcase?.length ? siteContent.showcase : DEFAULT_VILLAS);
+  const { landing } = useLandingCms();
+  const isMobile = useIsMobile();
+  const showcase = (isMobile ? landing?.mobile : landing?.desktop)?.showcase || {};
+  const villas = showcase.items?.length ? showcase.items : DEFAULT_VILLAS;
 
   return (
     <section className="section-padding bg-luxury-cream relative overflow-hidden">
@@ -110,9 +114,9 @@ const VillaShowcase = () => {
           className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6"
         >
           <div>
-            <span className="section-label">Collection</span>
-            <h2 className="section-title mb-4">Signature Villas</h2>
-            <p className="section-subtitle">A hand-selected portfolio of the world's most extraordinary private villas.</p>
+            <span className="section-label">{showcase.label || 'Collection'}</span>
+            <h2 className="section-title mb-4">{showcase.title || 'Signature Villas'}</h2>
+            <p className="section-subtitle">{showcase.subtitle || "A hand-selected portfolio of the world's most extraordinary private villas."}</p>
           </div>
           <Magnetic>
             <Link href="/villas" className="btn-outline !px-8 !py-3.5 text-[10px]">

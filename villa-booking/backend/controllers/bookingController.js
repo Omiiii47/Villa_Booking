@@ -70,7 +70,7 @@ const getBookingById = async (req, res) => {
       return res.status(404).json({ message: 'Booking not found' });
     }
 
-    if (booking.user._id.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+    if (booking.user._id.toString() !== req.user._id.toString()) {
       return res.status(403).json({ message: 'Not authorized' });
     }
 
@@ -88,7 +88,7 @@ const cancelBooking = async (req, res) => {
       return res.status(404).json({ message: 'Booking not found' });
     }
 
-    if (booking.user.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+    if (booking.user.toString() !== req.user._id.toString()) {
       return res.status(403).json({ message: 'Not authorized' });
     }
 
@@ -100,36 +100,4 @@ const cancelBooking = async (req, res) => {
   }
 };
 
-const getAllBookings = async (req, res) => {
-  try {
-    const { page = 1, limit = 20, status } = req.query;
-    const query = {};
-    if (status) query.status = status;
-
-    const total = await Booking.countDocuments(query);
-    const bookings = await Booking.find(query)
-      .populate('villa', 'name images pricePerNight')
-      .populate('user', 'name email')
-      .sort({ createdAt: -1 })
-      .skip((page - 1) * limit)
-      .limit(Number(limit));
-
-    res.json({ bookings, total, page: Number(page), pages: Math.ceil(total / limit) });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-const updateBookingStatus = async (req, res) => {
-  try {
-    const booking = await Booking.findByIdAndUpdate(req.params.id, { status: req.body.status }, { new: true });
-    if (!booking) {
-      return res.status(404).json({ message: 'Booking not found' });
-    }
-    res.json(booking);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-module.exports = { createBooking, getUserBookings, getBookingById, cancelBooking, getAllBookings, updateBookingStatus };
+module.exports = { createBooking, getUserBookings, getBookingById, cancelBooking };

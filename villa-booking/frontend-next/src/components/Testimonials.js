@@ -2,8 +2,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaStar, FaQuoteLeft } from 'react-icons/fa';
+import { useLandingCms } from '../context/LandingCmsContext';
+import useIsMobile from '../hooks/useIsMobile';
 
-const testimonials = [
+const DEFAULT_TESTIMONIALS = [
   { name: 'Sarah & James Mitchell', location: 'London, UK', villa: 'The Grand Horizon', text: 'An absolutely transcendent experience. Every detail was curated with such care that we felt like the only people in the world. The sunset from the infinity pool is something we will never forget.', rating: 5 },
   { name: 'The Patel Family', location: 'Mumbai, India', villa: 'Azure Cove Villa', text: 'Our family reunion at Azure Cove was magical. The children loved the private beach, and we adults cherished the wine cellar and sunset dinners. Already planning our return.', rating: 5 },
   { name: 'Emma & Thomas Keller', location: 'Zurich, Switzerland', villa: 'The Mountain Aerie', text: 'The Mountain Aerie exceeded every expectation. Waking up to those alpine views with a crackling fire — pure poetry. The hot springs after a day of skiing were heavenly.', rating: 5 },
@@ -11,10 +13,14 @@ const testimonials = [
 ];
 
 const Testimonials = () => {
+  const { landing } = useLandingCms();
+  const isMobile = useIsMobile();
+  const testimonialsData = (isMobile ? landing?.mobile : landing?.desktop)?.testimonials || {};
+  const testimonials = testimonialsData.items?.length ? testimonialsData.items : DEFAULT_TESTIMONIALS;
   const [current, setCurrent] = useState(0);
   const [dir, setDir] = useState(1);
 
-  const paginate = useCallback((d) => { setDir(d); setCurrent((p) => (p + d + testimonials.length) % testimonials.length); }, []);
+  const paginate = useCallback((d) => { setDir(d); setCurrent((p) => (p + d + testimonials.length) % testimonials.length); }, [testimonials.length]);
 
   useEffect(() => {
     const t = setInterval(() => paginate(1), 5000);
@@ -29,8 +35,8 @@ const Testimonials = () => {
       </div>
       <div className="luxury-container relative">
         <motion.div initial={{ opacity: 0, y: 40 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-16">
-          <span className="section-label">Testimonials</span>
-          <h2 className="section-title text-white">What Our Guests Say</h2>
+          <span className="section-label">{testimonialsData.label || 'Testimonials'}</span>
+          <h2 className="section-title text-white">{testimonialsData.title || 'What Our Guests Say'}</h2>
         </motion.div>
         <div className="max-w-3xl mx-auto">
           <div className="overflow-hidden min-h-[280px]">

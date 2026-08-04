@@ -1,13 +1,13 @@
 ﻿import { createContext, useContext, useState, useCallback } from 'react';
-import { toggleWishlist, getWishlist } from '../services/authService';
-import { useAuth } from './AuthContext';
+import { toggleWishlist, getWishlist } from '../services/userAuthService';
+import { useUserAuth } from './UserAuthContext';
 
 const WishlistContext = createContext();
 
 export const useWishlist = () => useContext(WishlistContext);
 
 export const WishlistProvider = ({ children }) => {
-  const { user } = useAuth();
+  const { user } = useUserAuth();
   const [wishlist, setWishlist] = useState([]);
   const [loading, setLoading] = useState(false);
 
