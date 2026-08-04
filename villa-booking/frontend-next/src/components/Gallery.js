@@ -11,13 +11,14 @@ const SPROCKET_H = 30;
 const STAGE_H = PHOTO_H + SPROCKET_H * 2 + 6;
 const MARQUEE_SPEED = 30;
 const FILM_BASE = '#171614';
+const SPROCKET_GOLD = '#C9A96A';
 const FILM_GRAIN =
   "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")";
 
 const SPROCKET_STYLE = {
   backgroundColor: FILM_BASE,
   backgroundImage:
-    'radial-gradient(ellipse 6px 5px at center, rgba(0,0,0,0.85) 55%, rgba(0,0,0,0) 60%)',
+    `radial-gradient(ellipse 6px 5px at center, ${SPROCKET_GOLD} 55%, rgba(0,0,0,0) 60%)`,
   backgroundSize: '30px 100%',
   backgroundPosition: 'center',
   backgroundRepeat: 'repeat-x',
@@ -53,13 +54,13 @@ const Gallery = () => {
   const unrolledRef = useRef(false);
   const [lightbox, setLightbox] = useState(null);
   const [isMobile, setIsMobile] = useState(false);
+  const [gutterW, setGutterW] = useState(0);
   const [unrolled, setUnrolled] = useState(false);
 
   const siteContent = useSiteContent();
   const galleryImages = siteContent?.gallery?.length ? siteContent.gallery : DEFAULT_IMAGES;
   const desktopImages = galleryImages.length > 6 ? galleryImages.filter((_, i) => i !== 6) : galleryImages;
   const mobileSource = useMemo(() => galleryImages.slice(0, Math.min(6, galleryImages.length)), [galleryImages]);
-  const loopFrames = useMemo(() => [...mobileSource, ...mobileSource], [mobileSource]);
   const stackImages = mobileSource.slice(0, Math.min(4, mobileSource.length));
   const images = desktopImages;
   const lightboxImages = isMobile ? mobileSource : galleryImages;
@@ -70,6 +71,19 @@ const Gallery = () => {
     window.addEventListener('resize', check);
     return () => window.removeEventListener('resize', check);
   }, []);
+
+  useEffect(() => {
+    if (!isMobile) return;
+    const stage = stageRef.current;
+    if (!stage) return;
+    const measure = () => {
+      const next = Math.max(0, Math.round((stage.clientWidth - FRAME_W) / 2));
+      setGutterW((prev) => (prev === next ? prev : next));
+    };
+    measure();
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, [isMobile]);
 
   const stopAtmosphere = useCallback(() => {
     if (flickerRef.current) { flickerRef.current.kill(); flickerRef.current = null; }
@@ -133,7 +147,7 @@ const Gallery = () => {
     const track = trackRef.current;
     if (!stage || !track) return;
     reduceMotionRef.current = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    metricsRef.current.dist = mobileSource.length * FRAME_W;
+    metricsRef.current.dist = mobileSource.length * FRAME_W + gutterW;
     const s = marqueeState.current;
 
     const onDown = (e) => {
@@ -188,7 +202,7 @@ const Gallery = () => {
       window.removeEventListener('pointerup', onUp);
       window.removeEventListener('pointercancel', onUp);
     };
-  }, [isMobile, mobileSource, startAtmosphere, stopAtmosphere]);
+  }, [isMobile, mobileSource, gutterW, startAtmosphere, stopAtmosphere]);
 
   return (
     <section className="relative bg-luxury-cream">
@@ -224,37 +238,47 @@ const Gallery = () => {
               <div
                 ref={trackRef}
                 className="absolute left-0 top-0 h-full flex items-center will-change-transform opacity-0"
-                style={{ width: loopFrames.length * FRAME_W }}
+                style={{ width: (mobileSource.length * FRAME_W + gutterW) * 2 }}
               >
                 <div className="absolute top-0 left-0 right-0 pointer-events-none" style={{ height: SPROCKET_H, ...SPROCKET_STYLE }} />
                 <div className="absolute bottom-0 left-0 right-0 pointer-events-none" style={{ height: SPROCKET_H, ...SPROCKET_STYLE }} />
 
-                {loopFrames.map((img, i) => (
-                  <div
-                    key={`${img.src}-${i}`}
-                    ref={(el) => { frameRefs.current[i] = el; }}
-                    className="relative shrink-0 cursor-pointer"
-                    style={{ width: FRAME_W, padding: '0 2px' }}
-                  >
-                    <div
-                      className="overflow-hidden"
-                      style={{
-                        height: PHOTO_H,
-                        marginTop: SPROCKET_H,
-                        boxShadow: '0 3px 10px rgba(0,0,0,0.45), inset 0 0 0 1px rgba(255,255,255,0.08)',
-                      }}
-                    >
-                      <img
-                        src={img.src}
-                        alt={img.alt}
-                        className="w-full h-full object-cover"
-                        loading={i < 2 ? 'eager' : 'lazy'}
-                        draggable={false}
-                        onClick={() => setLightbox(i % mobileSource.length)}
-                      />
-                    </div>
-                  </div>
-                ))}
+                {Array.from({ length: 2 }).flatMap((_, copy) => {
+                  const base = copy * mobileSource.length;
+                  return [
+                    <div key={`spacer-${copy}`} aria-hidden className="shrink-0" style={{ width: gutterW }} />,
+                    ...mobileSource.map((img, i) => {
+                      const idx = base + i;
+                      return (
+                        <div
+                          key={`${img.src}-${idx}`}
+                          ref={(el) => { frameRefs.current[idx] = el; }}
+                          className="relative shrink-0 cursor-pointer"
+                          style={{ width: FRAME_W, padding: '3px 2px' }}
+                        >
+                          <div
+                            className="overflow-hidden"
+                            style={{
+                              height: PHOTO_H,
+                              marginTop: SPROCKET_H,
+                              marginBottom: SPROCKET_H,
+                              boxShadow: '0 3px 10px rgba(0,0,0,0.45), inset 0 0 0 1px rgba(255,255,255,0.08)',
+                            }}
+                          >
+                            <img
+                              src={img.src}
+                              alt={img.alt}
+                              className="w-full h-full object-cover"
+                              loading={i < 2 ? 'eager' : 'lazy'}
+                              draggable={false}
+                              onClick={() => setLightbox(i % mobileSource.length)}
+                            />
+                          </div>
+                        </div>
+                      );
+                    }),
+                  ];
+                })}
               </div>
 
               <AnimatePresence>
