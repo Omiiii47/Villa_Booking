@@ -102,7 +102,7 @@ const Hero = () => {
         </motion.div>
       </motion.div>
 
-      <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-[#F8F6F2] to-transparent z-10 pointer-events-none" />
+      <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-[#F8F6F2] to-transparent z-10 pointer-events-none" />
     </section>
   );
 };

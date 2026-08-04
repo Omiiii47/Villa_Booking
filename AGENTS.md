@@ -27,8 +27,8 @@ Luxury villa booking platform ("Solscape Stays"). Two packages under `villa-book
 
 ## Backend notes
 
-- CommonJS (`require`/`module.exports`), Express 5 + Mongoose 9. Routes are wired in `server.js`; one file per resource under `routes/`, `controllers/`, `models/`, `middleware/` (contact + site-content share `adminController`).
-- Villa routes: `/featured` and `/slug/:slug` are registered before `/:id` — keep that order or they'll be shadowed (`routes/villaRoutes.js`).
+- CommonJS (`require`/`module.exports`), Express 5 + Mongoose 9. Routes are wired in `server.js`; one file per resource under `routes/`, `controllers/`, `models/`, `middleware/`. Note: `POST /api/contact` is handled inline in `contactRoutes.js` (no controller); site-content is the only resource served from `adminController`.
+- Villa routes: `/featured` and `/slug/:slug` are registered before `/:id` — keep that order or they'll be shadowed (`routes/villaRoutes.js`). `POST /api/villas/upload-images` is admin-only, `upload.array('images', 10)` — max 10 images, 5MB each.
 - `SiteContent` (hero/gallery/showcase) is lazily created with defaults on first read via `adminController.getOrCreateContent`. `GET /api/site-content` is public; `GET|PUT /api/admin/site-content` is admin-only.
 
 ## Frontend (frontend-next) notes

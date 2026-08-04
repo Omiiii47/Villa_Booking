@@ -213,8 +213,6 @@ const Gallery = () => {
                 })}
               </div>
             </div>
-
-            <p className="text-center mt-5 text-[10px] uppercase tracking-[0.25em] text-gray-400">Swipe the film strip ⟷</p>
           </div>
         </div>
       ) : (
