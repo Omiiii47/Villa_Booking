@@ -49,9 +49,7 @@ const Navbar = () => {
         <div className="luxury-container">
           <div className="flex items-center justify-between h-20 md:h-24">
             <Link href="/" className="flex items-center gap-1.5 group">
-              <span className={`font-display text-xl md:text-2xl tracking-tight transition-colors duration-500 ${
-                scrolled ? 'text-luxury-black' : 'text-white'
-              }`}>
+              <span className="font-display text-xl md:text-2xl tracking-tight transition-colors duration-500 text-luxury-black">
                 Solscape
               </span>
               <span className="font-display text-xl md:text-2xl font-light italic text-luxury-accent">Stays</span>
@@ -102,11 +100,7 @@ const Navbar = () => {
 
             <button
               onClick={() => setMobileOpen(!mobileOpen)}
-              className={`lg:hidden relative w-12 h-12 flex items-center justify-center rounded-full transition-all duration-500 ${
-                scrolled
-                  ? 'text-luxury-black hover:bg-black/5'
-                  : 'text-white bg-white/10 backdrop-blur-sm hover:bg-white/20'
-              }`}
+              className="lg:hidden relative w-12 h-12 flex items-center justify-center rounded-full transition-all duration-500 text-luxury-black hover:bg-black/5"
             >
               <div className="flex flex-col items-center gap-1">
                 <motion.span animate={mobileOpen ? { rotate: 45, y: 5.5 } : { rotate: 0, y: 0 }} className="block w-5 h-[1.5px] bg-current" />
