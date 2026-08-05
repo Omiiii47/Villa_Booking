@@ -8,24 +8,6 @@ import { useLandingCms } from '../context/LandingCmsContext';
 import useIsMobile from '../hooks/useIsMobile';
 import { imgUrl } from '../utils/imgUrl';
 
-const DEFAULT_VILLAS = [
-  {
-    name: 'The Grand Horizon', slug: 'the-grand-horizon',
-    image: '',
-    tag: 'Oceanfront', price: '$2,500', desc: 'A breathtaking cliffside retreat with panoramic ocean views',
-  },
-  {
-    name: 'Azure Cove Villa', slug: 'azure-cove-villa',
-    image: '',
-    tag: 'Beachfront', price: '$3,200', desc: 'Private beachfront paradise with crystalline waters',
-  },
-  {
-    name: 'The Emerald Canopy', slug: 'the-emerald-canopy',
-    image: '',
-    tag: 'Rainforest', price: '$1,800', desc: 'A treetop sanctuary immersed in ancient rainforest',
-  },
-];
-
 const VillaCard = ({ villa, i }) => {
   const cardRef = useRef(null);
   const { scrollYProgress } = useScroll({ target: cardRef, offset: ['start end', 'end start'] });
@@ -104,7 +86,7 @@ const VillaShowcase = () => {
   const { landing } = useLandingCms();
   const isMobile = useIsMobile();
   const showcase = (isMobile ? landing?.mobile : landing?.desktop)?.showcase || {};
-  const villas = showcase.items?.length ? showcase.items : DEFAULT_VILLAS;
+  const villas = showcase.items || [];
 
   return (
     <section className="section-padding bg-luxury-cream relative overflow-hidden">

@@ -5,41 +5,32 @@ import { useLandingCms } from '../context/LandingCmsContext';
 import useIsMobile from '../hooks/useIsMobile';
 import { getLandingIcon } from '../constants/landingIcons';
 
-const DEFAULT_ITEMS = [
-  { icon: 'FaSwimmer', name: 'Infinity Pool', desc: 'Heated infinity edge pool with panoramic views' },
-  { icon: 'FaUtensils', name: 'Private Chef', desc: 'In-villa dining with personal chef service' },
-  { icon: 'FaSpa', name: 'Spa & Wellness', desc: 'Full-service spa with massage and treatments' },
-  { icon: 'FaWineBottle', name: 'Wine Cellar', desc: 'Curated wine selection and sommelier service' },
-  { icon: 'FaUmbrellaBeach', name: 'Private Beach', desc: 'Exclusive beach access with loungers' },
-  { icon: 'FaPray', name: 'Yoga Pavilion', desc: 'Daily yoga and meditation sessions' },
-];
-
 const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.08 } } };
 const item = { hidden: { opacity: 0, y: 40 }, show: { opacity: 1, y: 0, transition: { duration: 0.6 } } };
 
-const CARD_GAP = 20;
+const CARD_GAP = 24;
 const LOOP_SECONDS = 22;
 
-const renderCard = (a) => {
-  const Icon = getLandingIcon(a.icon);
+const renderExp = (exp) => {
+  const Icon = getLandingIcon(exp.icon);
   return (
-    <div className="group card-premium p-8 cursor-default">
-      <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-luxury-accent/20 to-luxury-accent/5 flex items-center justify-center mb-5 group-hover:from-luxury-accent group-hover:to-luxury-accent/80 transition-all duration-500">
-        <Icon className="text-xl text-luxury-accent group-hover:text-white transition-colors duration-500" />
+    <div className="text-center group cursor-default">
+      <div className="w-20 h-20 rounded-full bg-white shadow-lg flex items-center justify-center mx-auto mb-6 group-hover:bg-luxury-accent transition-all duration-700">
+        <Icon className="text-2xl text-luxury-black group-hover:text-white transition-colors duration-700" />
       </div>
-      <h3 className="font-display text-lg text-luxury-black mb-2">{a.name}</h3>
-      <p className="text-gray-400 text-sm leading-relaxed">{a.desc}</p>
+      <h3 className="font-display text-xl text-luxury-black mb-3">{exp.title}</h3>
+      <p className="text-gray-400 text-sm leading-relaxed max-w-xs mx-auto">{exp.desc}</p>
     </div>
   );
 };
 
-const MobileAmenitiesSlider = ({ items }) => {
+const MobileExperiencesSlider = ({ items }) => {
   const scrollerRef = useRef(null);
   const cardRefs = useRef([]);
   const cards = [...items, ...items];
 
-  const measureRef = useRef(0); // width of one set of cards -> seamless loop boundary
-  const speedRef = useRef(0);   // px per second
+const measureRef = useRef(0); // width of one set of cards -> seamless loop boundary
+  const speedRef = useRef(0);   // px per second (LEFT -> RIGHT)
   const reducedRef = useRef(
     typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
   );
@@ -62,7 +53,10 @@ const MobileAmenitiesSlider = ({ items }) => {
 
     const onResize = () => {
       computeMetrics();
-      if (scroller.scrollLeft > measureRef.current) scroller.scrollLeft = measureRef.current;
+      if (scroller.scrollLeft < 0) scroller.scrollLeft = 0;
+      if (scroller.scrollLeft > scroller.scrollWidth - scroller.clientWidth) {
+        scroller.scrollLeft = scroller.scrollWidth - scroller.clientWidth;
+      }
     };
 
     computeMetrics();
@@ -78,15 +72,11 @@ const MobileAmenitiesSlider = ({ items }) => {
       const dt = Math.min((now - last) / 1000, 0.1);
       last = now;
 
-      let scrollLeft = scroller.scrollLeft;
-      if (measureRef.current > 0 && scrollLeft >= measureRef.current) {
-        scrollLeft -= measureRef.current;
-        scroller.scrollLeft = scrollLeft;
-      }
+      if (speedRef.current <= 0) return;
 
-      if (speedRef.current > 0) {
-        scroller.scrollLeft = scrollLeft + speedRef.current * dt;
-      }
+      let scrollLeft = scroller.scrollLeft - speedRef.current * dt; // LEFT -> RIGHT
+      if (scrollLeft < 0) scrollLeft += measureRef.current;         // seamless wrap
+      scroller.scrollLeft = scrollLeft;
     };
     raf = requestAnimationFrame(tick);
 
@@ -111,14 +101,14 @@ const MobileAmenitiesSlider = ({ items }) => {
       }}
     >
       <div className="flex w-max transform-gpu" style={{ gap: CARD_GAP }}>
-        {cards.map((a, i) => (
+        {cards.map((exp, i) => (
           <div
             key={i}
             ref={(el) => { cardRefs.current[i] = el; }}
-            className="shrink-0"
-            style={{ width: 'min(85vw, 360px)' }}
+            className="shrink-0 flex items-center justify-center"
+            style={{ width: 'min(85vw, 340px)' }}
           >
-            {renderCard(a)}
+            {renderExp(exp)}
           </div>
         ))}
       </div>
@@ -126,30 +116,30 @@ const MobileAmenitiesSlider = ({ items }) => {
   );
 };
 
-const Amenities = () => {
+const Experiences = () => {
   const { landing } = useLandingCms();
   const isMobile = useIsMobile();
-  const amenities = (isMobile ? landing?.mobile : landing?.desktop)?.amenities || {};
-  const items = amenities.items?.length ? amenities.items : DEFAULT_ITEMS;
+  const experiences = (isMobile ? landing?.mobile : landing?.desktop)?.experiences || {};
+  const items = experiences.items || [];
 
   return (
-    <section className="section-padding">
+    <section className="section-padding bg-luxury-cream">
       <div className="luxury-container">
         <motion.div initial={{ opacity: 0, y: 40 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-16">
-          <span className="section-label">{amenities.label || 'Amenities'}</span>
-          <h2 className="section-title mb-4">{amenities.title || 'The Finest Experiences'}</h2>
-          <p className="section-subtitle mx-auto">{amenities.subtitle || 'Every villa is curated with world-class amenities designed to elevate your stay.'}</p>
+          <span className="section-label">{experiences.label || 'Experiences'}</span>
+          <h2 className="section-title mb-4">{experiences.title || 'Beyond The Villa'}</h2>
+          <p className="section-subtitle mx-auto">{experiences.subtitle || 'Immersive experiences crafted to make your stay truly unforgettable.'}</p>
         </motion.div>
 
         {isMobile ? (
           <div className="-mx-6">
-            <MobileAmenitiesSlider items={items} />
+            <MobileExperiencesSlider items={items} />
           </div>
         ) : (
-          <motion.div variants={container} initial="hidden" whileInView="show" viewport={{ once: true }} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {items.map((a) => (
-              <motion.div key={a.name} variants={item} whileHover={{ y: -6 }}>
-                {renderCard(a)}
+          <motion.div variants={container} initial="hidden" whileInView="show" viewport={{ once: true }} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {items.map((exp) => (
+              <motion.div key={exp.title} variants={item} whileHover={{ y: -6 }}>
+                {renderExp(exp)}
               </motion.div>
             ))}
           </motion.div>
@@ -159,4 +149,4 @@ const Amenities = () => {
   );
 };
 
-export default Amenities;
+export default Experiences;

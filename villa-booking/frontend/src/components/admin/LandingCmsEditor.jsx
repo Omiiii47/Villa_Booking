@@ -103,6 +103,17 @@ const migrateGallery = (data) => {
   return out;
 };
 
+const collectPublicIds = (node, ids = new Set()) => {
+  if (!node || typeof node !== 'object') return ids;
+  if (typeof node.publicId === 'string' && node.publicId) ids.add(node.publicId);
+  if (Array.isArray(node)) {
+    node.forEach((child) => collectPublicIds(child, ids));
+    return ids;
+  }
+  Object.values(node).forEach((child) => collectPublicIds(child, ids));
+  return ids;
+};
+
 const renderField = (field, value, onChange) => {
   if (field.type === 'select') {
     return (
@@ -126,6 +137,7 @@ const LandingCmsEditor = () => {
   const [data, setData] = useState(null);
   const [platform, setPlatform] = useState('desktop');
   const [saving, setSaving] = useState(false);
+  const [pendingDeletes, setPendingDeletes] = useState([]);
 
   useEffect(() => {
     adminService.getCmsLanding().then((d) => setData(migrateGallery(d))).catch(() => setData(null));
@@ -157,7 +169,9 @@ const LandingCmsEditor = () => {
   const removeItem = (section, index) => {
     const items = sectionList(section);
     const removed = items[index];
-    if (removed?.image?.publicId) adminService.deleteCmsImage(removed.image.publicId).catch(() => {});
+    if (removed?.image?.publicId) {
+      setPendingDeletes((prev) => [...prev, removed.image.publicId]);
+    }
     setSectionList(section, items.filter((_, i) => i !== index));
   };
 
@@ -167,13 +181,22 @@ const LandingCmsEditor = () => {
 
   const handleSave = async () => {
     setSaving(true);
+    let res;
     try {
-      const res = await adminService.updateCmsLanding(data);
-      setData(res);
-      alert('Landing content saved');
+      res = await adminService.updateCmsLanding(data);
     } catch {
       alert('Failed to save content');
+      setSaving(false);
+      return;
     }
+    const retained = collectPublicIds(res);
+    const toDelete = [...new Set(pendingDeletes.filter((id) => !retained.has(id)))];
+    if (toDelete.length) {
+      await Promise.allSettled(toDelete.map((id) => adminService.deleteCmsImage(id)));
+    }
+    setPendingDeletes([]);
+    setData(res);
+    alert('Landing content saved');
     setSaving(false);
   };
 
@@ -213,7 +236,8 @@ const LandingCmsEditor = () => {
           {section === 'hero' && (
             <>
               <ImageField label="Background Image" value={data[platform].hero?.image}
-                onChange={(v) => patchSection('hero', { image: v })} />
+                onChange={(v) => patchSection('hero', { image: v })}
+                onDeletePublicId={(id) => setPendingDeletes((prev) => [...prev, id])} />
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {HERO_FIELDS.map((f) => (
                   <div key={f.key} className={f.type === 'textarea' ? 'md:col-span-2' : ''}>
@@ -259,7 +283,8 @@ const LandingCmsEditor = () => {
                             <div key={f.key} className={f.type === 'image' || f.type === 'textarea' ? 'md:col-span-2' : ''}>
                               <label className="block text-xs text-gray-400 mb-1">{f.label}</label>
                               {f.type === 'image'
-                                ? <ImageField label={f.label} value={item.image} onChange={(v) => updateItem(section, i, 'image', v)} />
+                                ? <ImageField label={f.label} value={item.image} onChange={(v) => updateItem(section, i, 'image', v)}
+                                    onDeletePublicId={(id) => setPendingDeletes((prev) => [...prev, id])} />
                                 : renderField(f, item[f.key], (v) => updateItem(section, i, f.key, v))}
                             </div>
                           ))}
@@ -302,7 +327,7 @@ const HeadingFields = ({ section, value, onPatch }) => (
   </div>
 );
 
-const ImageField = ({ label, value, onChange }) => {
+const ImageField = ({ label, value, onChange, onDeletePublicId }) => {
   const fileRef = useRef(null);
   const [uploading, setUploading] = useState(false);
   const src = imgUrl(value);
@@ -321,9 +346,9 @@ const ImageField = ({ label, value, onChange }) => {
     e.target.value = '';
   };
 
-  const handleRemove = async () => {
+  const handleRemove = () => {
     if (value?.publicId) {
-      adminService.deleteCmsImage(value.publicId).catch(() => {});
+      onDeletePublicId(value.publicId);
     }
     onChange({ url: '', publicId: '' });
   };

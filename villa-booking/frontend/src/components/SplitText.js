@@ -2,7 +2,9 @@
 import { motion } from 'framer-motion';
 
 const SplitText = ({ text, as: Tag = 'span', className = '', delay = 0, stagger = 0.02, type = 'word' }) => {
-  const items = type === 'word' ? text.split(' ') : text.split('');
+  const items = text ? (type === 'word' ? text.split(' ') : text.split('')) : [];
+
+  if (!items.length) return null;
 
   const container = {
     hidden: { opacity: 1 },

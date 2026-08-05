@@ -5,20 +5,10 @@ import { FaArrowRight, FaPaperPlane } from 'react-icons/fa';
 import { useLandingCms } from '../context/LandingCmsContext';
 import useIsMobile from '../hooks/useIsMobile';
 
-const DEFAULT_NEWSLETTER = {
-  label: 'Stay Connected',
-  title: 'Join Our Concierge Circle',
-  subtitle: 'Receive exclusive offers, new villa announcements, and curated travel inspiration.',
-  placeholder: 'Your email address',
-  buttonText: 'Subscribe',
-  successTitle: 'Thank you!',
-  successMessage: 'Welcome to the Solscape Stays family.',
-};
-
 const Newsletter = () => {
   const { landing } = useLandingCms();
   const isMobile = useIsMobile();
-  const newsletter = (isMobile ? landing?.mobile : landing?.desktop)?.newsletter || DEFAULT_NEWSLETTER;
+  const newsletter = (isMobile ? landing?.mobile : landing?.desktop)?.newsletter || {};
   const [email, setEmail] = useState('');
   const [subscribed, setSubscribed] = useState(false);
 

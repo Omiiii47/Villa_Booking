@@ -26,15 +26,7 @@ const SPROCKET_STYLE = {
   boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.06)',
 };
 
-const DEFAULT_IMAGES = [
-  { src: '', alt: 'The Grand Horizon', location: 'Cliffside Bay, Maldives', size: 'md' },
-  { src: '', alt: 'Infinity Serenity', location: 'Azure Coast, Greece', size: 'sm' },
-  { src: '', alt: 'Sunset Pavilion', location: 'Tuscany, Italy', size: 'sm' },
-  { src: '', alt: 'Azure Cove', location: 'Private Beach, Seychelles', size: 'md' },
-  { src: '', alt: 'Golden Hour Lounge', location: 'Coastal Ridge, Bali', size: 'sm' },
-  { src: '', alt: 'Canopy Haven', location: 'Rainforest Reserve, Costa Rica', size: 'sm' },
-  { src: '', alt: 'Crystal Baths', location: 'Alpine Retreat, Switzerland', size: 'md' },
-];
+const EMPTY_IMAGES = [];
 
 const itemVariants = {
   hidden: { opacity: 0, scale: 0.6, y: 30 },
@@ -55,7 +47,7 @@ const Gallery = () => {
 
   const { landing } = useLandingCms();
   const galleryData = (isMobile ? landing?.mobile : landing?.desktop)?.gallery || {};
-  const galleryImages = galleryData.images?.length ? galleryData.images : (galleryData.items?.length ? galleryData.items : DEFAULT_IMAGES);
+  const galleryImages = galleryData.images?.length ? galleryData.images : (galleryData.items?.length ? galleryData.items : EMPTY_IMAGES);
   const srcOf = (img) => imgUrl(img.image || img.src);
   const desktopImages = galleryImages.length > 6 ? galleryImages.filter((_, i) => i !== 6) : galleryImages;
   const mobileSource = useMemo(() => galleryImages.slice(0, Math.min(6, galleryImages.length)), [galleryImages]);

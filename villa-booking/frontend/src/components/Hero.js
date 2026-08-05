@@ -8,20 +8,11 @@ import { useLandingCms } from '../context/LandingCmsContext';
 import useIsMobile from '../hooks/useIsMobile';
 import { imgUrl } from '../utils/imgUrl';
 
-const DEFAULT_HERO = {
-  eyebrow: 'Extraordinary Stays Await',
-  titleLine1: 'Where Luxury',
-  titleLine2: 'Meets Nature',
-  subtitle: "Discover an exclusive collection of handpicked villas nestled in the world's most breathtaking destinations.",
-  ctaPrimary: 'Explore Villas',
-  ctaSecondary: 'Discover More',
-};
-
 const Hero = () => {
   const ref = useRef(null);
   const { landing } = useLandingCms();
   const isMobile = useIsMobile();
-  const hero = (isMobile ? landing?.mobile : landing?.desktop)?.hero || DEFAULT_HERO;
+  const hero = (isMobile ? landing?.mobile : landing?.desktop)?.hero || {};
   const heroImage = imgUrl(hero.image);
   const { scrollYProgress } = useScroll({ target: ref, offset: ['start start', 'end start'] });
   const bgY = useTransform(scrollYProgress, [0, 1], ['0%', '25%']);
@@ -63,7 +54,7 @@ const Hero = () => {
           </span>
         </motion.div>
 
-        <h1 className="font-display text-hero text-white leading-[0.95] mb-8">
+        <h1 className="font-display text-hero text-white leading-[0.95] mb-8 flex flex-col items-center">
           <WordSplit text={hero.titleLine1} stagger={0.04} className="block" />
           <WordSplit text={hero.titleLine2} stagger={0.04} delay={0.4} className="block italic font-light mt-2" />
         </h1>
