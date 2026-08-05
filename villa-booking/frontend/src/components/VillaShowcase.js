@@ -1,4 +1,5 @@
 ﻿'use client'
+import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { FaArrowRight } from 'react-icons/fa';
@@ -7,6 +8,9 @@ import Magnetic from './Magnetic';
 import { useLandingCms } from '../context/LandingCmsContext';
 import useIsMobile from '../hooks/useIsMobile';
 import { imgUrl } from '../utils/imgUrl';
+import { getVillas } from '../services/villaService';
+
+const normalize = (value) => String(value || '').toLowerCase().trim().replace(/\s+/g, ' ');
 
 const VillaCard = ({ villa, i }) => {
   const cardRef = useRef(null);
@@ -87,7 +91,32 @@ const VillaShowcase = () => {
   const { landing } = useLandingCms();
   const isMobile = useIsMobile();
   const showcase = (isMobile ? landing?.mobile : landing?.desktop)?.showcase || {};
-  const villas = showcase.items || [];
+  const [dbVillas, setDbVillas] = useState([]);
+
+  useEffect(() => {
+    let active = true;
+    getVillas({ limit: 100 })
+      .then((data) => { if (active) setDbVillas(data.villas || []); })
+      .catch(() => {});
+    return () => { active = false; };
+  }, []);
+
+  const resolvedItems = useMemo(() => {
+    const byName = new Map();
+    const bySlug = new Map();
+    dbVillas.forEach((v) => {
+      byName.set(normalize(v.name), v.slug);
+      bySlug.set(normalize(v.slug), v.slug);
+    });
+    return (showcase.items || []).map((item) => {
+      const nameSlug = byName.get(normalize(item.name));
+      const slugSlug = bySlug.get(normalize(item.slug));
+      const slug = nameSlug || slugSlug || item.slug;
+      return { ...item, slug };
+    });
+  }, [showcase.items, dbVillas]);
+
+  const villas = resolvedItems;
 
   return (
     <section className="section-padding bg-luxury-cream relative overflow-hidden">

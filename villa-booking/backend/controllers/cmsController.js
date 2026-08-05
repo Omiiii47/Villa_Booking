@@ -1,4 +1,5 @@
 const CmsSection = require('../models/CmsSection');
+const Villa = require('../models/Villa');
 const cloudinary = require('../utils/cloudinary');
 
 const LANDING_SECTIONS = ['hero', 'showcase', 'gallery', 'amenities', 'experiences', 'testimonials', 'faqs', 'newsletter'];
@@ -136,9 +137,35 @@ const buildLanding = async () => {
   return landing;
 };
 
+const normalize = (value) => String(value || '').toLowerCase().trim().replace(/\s+/g, ' ');
+
+const resolveShowcaseSlugs = async (landing) => {
+  const villas = await Villa.find({}).select('name slug').lean();
+  const byName = new Map();
+  const bySlug = new Map();
+  villas.forEach((v) => {
+    byName.set(normalize(v.name), v.slug);
+    bySlug.set(normalize(v.slug), v.slug);
+  });
+
+  for (const platform of LANDING_PLATFORMS) {
+    const items = landing[platform]?.showcase?.items;
+    if (!Array.isArray(items)) continue;
+    items.forEach((item) => {
+      if (!item || typeof item !== 'object') return;
+      const byNameSlug = byName.get(normalize(item.name));
+      const bySlugSlug = bySlug.get(normalize(item.slug));
+      const resolved = byNameSlug || bySlugSlug || item.slug;
+      if (resolved) item.slug = resolved;
+    });
+  }
+  return landing;
+};
+
 const getLanding = async (req, res) => {
   try {
-    res.json(await buildLanding());
+    const landing = await buildLanding();
+    res.json(await resolveShowcaseSlugs(landing));
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -161,7 +188,7 @@ const updateLanding = async (req, res) => {
         }
       }
     }
-    res.json(await buildLanding());
+    res.json(await resolveShowcaseSlugs(await buildLanding()));
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

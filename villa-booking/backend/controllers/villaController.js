@@ -39,7 +39,7 @@ const getVillas = async (req, res) => {
 
 const getVillaBySlug = async (req, res) => {
   try {
-    const villa = await Villa.findOne({ slug: req.params.slug });
+    const villa = await Villa.findOne({ slug: new RegExp(`^${req.params.slug.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') });
     if (!villa) {
       return res.status(404).json({ message: 'Villa not found' });
     }
@@ -61,9 +61,23 @@ const getVillaById = async (req, res) => {
   }
 };
 
+const slugify = (name) =>
+  String(name || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+
+const createUniqueSlug = async (name) => {
+  const base = slugify(name) || 'villa';
+  let candidate = base;
+  let suffix = 1;
+  while (await Villa.findOne({ slug: new RegExp(`^${candidate.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') })) {
+    candidate = `${base}-${suffix}`;
+    suffix += 1;
+  }
+  return candidate;
+};
+
 const createVilla = async (req, res) => {
   try {
-    const slug = req.body.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    const slug = await createUniqueSlug(req.body.name);
     const villa = await Villa.create({ ...req.body, slug });
     res.status(201).json(villa);
   } catch (error) {
@@ -75,7 +89,12 @@ const updateVilla = async (req, res) => {
   try {
     const body = { ...req.body };
     if (body.name) {
-      body.slug = body.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+      const newSlug = slugify(body.name);
+      const existing = await Villa.findOne({
+        slug: new RegExp(`^${newSlug.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i'),
+        _id: { $ne: req.params.id },
+      });
+      body.slug = existing ? await createUniqueSlug(body.name) : newSlug;
     }
     const villa = await Villa.findByIdAndUpdate(req.params.id, body, { new: true, runValidators: true });
     if (!villa) {
