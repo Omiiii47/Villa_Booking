@@ -1,13 +1,13 @@
 # AGENTS.md
 
-Luxury villa booking platform ("Solscape Stays"). Two packages under `villa-booking/`: a Next.js App Router frontend and an Express + Mongoose backend. They run as separate dev servers. The legacy CRA app (`frontend/`) has been removed — `frontend-next/` is the active frontend and is wired to the backend API.
+Luxury villa booking platform ("Solscape Stays"). Two packages under `villa-booking/`: a Next.js App Router frontend and an Express + Mongoose backend. They run as separate dev servers. The frontend lives at `villa-booking/frontend/` (its `package.json` `name` is `frontend-next` — the dir is `frontend`, not `frontend-next`) and is wired to the backend API.
 
-There is **no root tooling**: no root `package.json`/lockfile, `.gitignore`, README, or CI. Run all `npm` commands inside `villa-booking/backend` or `villa-booking/frontend-next`; the git repo root is this directory.
+There is **no root tooling**: no root `package.json`/lockfile, README, or CI (root `.gitignore` only ignores nothing repo-wide). Run all `npm` commands inside `villa-booking/backend` or `villa-booking/frontend`; the git repo root is this directory.
 
 ## Running the app
 
 - Backend: `cd villa-booking/backend && npm run dev` (nodemon `server.js`), listens on port `5000`.
-- Frontend: `cd villa-booking/frontend-next && npm run dev`, listens on `3000`. Run both. CORS is wide-open, so origin port doesn't matter.
+- Frontend: `cd villa-booking/frontend && npm run dev`, listens on `3000`. Run both. CORS is wide-open, so origin port doesn't matter.
 - Frontend reaches the API at `http://localhost:5000/api` via `src/services/api.js` (axios, baseURL overridable with `NEXT_PUBLIC_API_URL`).
 - Health check: `GET /api/health`.
 
@@ -45,7 +45,7 @@ There is **no root tooling**: no root `package.json`/lockfile, `.gitignore`, REA
 ## Frontend (frontend-next) notes
 
 - Next.js **16.2.12** App Router + React 19, Tailwind CSS **v4** (via `@tailwindcss/postcss` — no `tailwind.config.js`), framer-motion/GSAP/@studio-freight/lenis for animation.
-- Next 16 has breaking conventions vs. typical training data. `frontend-next/AGENTS.md` (also referenced by `CLAUDE.md`) requires reading the relevant guide in `node_modules/next/dist/docs/` before writing code. Heed deprecation notices.
+- Next 16 has breaking conventions vs. typical training data. `villa-booking/frontend/AGENTS.md` (also referenced by `CLAUDE.md`) requires reading the relevant guide in `node_modules/next/dist/docs/` before writing code. Heed deprecation notices.
 - Structure: thin `page.jsx` files in `app/` are `'use client'` wrappers that render views from `src/views/` (e.g. `app/(site)/villas/[slug]/page.jsx` → `VillaDetails`). Shared code lives in `src/components/`, `src/context/` (UserAuthContext, AdminAuthContext, WishlistContext, LandingCmsContext), `src/hooks/` (useIsMobile), `src/services/` (axios layer). Route groups `(site)` and `(auth)` each define their own animated client layout with Navbar; `app/admin/` has its own bare layout.
 - Landing page components consume CMS data via `LandingCmsProvider` (wraps `src/views/Home.js` only) → `useLandingCms()` returns `{ landing: { desktop, mobile }, loading, refetch }`; components pick `isMobile ? landing.mobile : landing.desktop` using `useIsMobile()` and fall back to hardcoded defaults if CMS is empty. Amenity/experience icons are stored as string names resolved through `src/constants/landingIcons.js` (`getLandingIcon`). Admin CMS UI lives in `src/components/admin/LandingCmsEditor.jsx` (Desktop/Mobile toggle, per-section editors, upload/preview/delete/reorder, save) wired to the `Landing CMS` tab in `src/views/AdminDashboard.js`.
 - Code is plain JS (`.js`/`.jsx`), not TSX, despite the tsconfig.
@@ -53,5 +53,5 @@ There is **no root tooling**: no root `package.json`/lockfile, `.gitignore`, REA
 ## Verification
 
 - Backend has no lint/typecheck/test — verify manually against the running API.
-- Frontend: `npm run lint` (eslint) and `npm run build` (next build) in `frontend-next`. No test suite.
-- An agent-generated frontend change should at minimum pass `npm run build` in `frontend-next`.
+- Frontend: `npm run lint` (eslint) and `npm run build` (next build) in `villa-booking/frontend`. No test suite.
+- An agent-generated frontend change should at minimum pass `npm run build` in `villa-booking/frontend`.

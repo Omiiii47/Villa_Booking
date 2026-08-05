@@ -57,7 +57,7 @@ const VillaCard = ({ villa, index = 0 }) => {
         >
           <Link href={`/villas/${villa.slug}`} className="relative block h-72 overflow-hidden">
             <motion.img
-              src={villa.images?.[0] || 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=600'}
+              src={villa.images?.[0] || '/img/villa-placeholder.svg'}
               alt={villa.name}
               className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
               loading="lazy"

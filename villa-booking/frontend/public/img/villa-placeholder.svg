@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800" viewBox="0 0 1200 800">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0d1b2a"/>
+      <stop offset="1" stop-color="#1b263b"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="800" fill="url(#bg)"/>
+  <g fill="none" stroke="#3e5c76" stroke-width="3" opacity="0.5">
+    <circle cx="950" cy="150" r="120"/>
+    <circle cx="1050" cy="140" r="60"/>
+  </g>
+  <g fill="#5b7a9d">
+    <path d="M250 160 l-90 120 v330 h180 v-330 z"/>
+    <rect x="280" y="360" width="120" height="250"/>
+    <rect x="220" y="420" width="50" height="190"/>
+    <rect x="410" y="420" width="50" height="190"/>
+  </g>
+  <text x="600" y="720" text-anchor="middle" font-family="Georgia, serif" font-size="42" fill="#e0e1dd" letter-spacing="6">LUXURY VILLA</text>
+  <text x="600" y="760" text-anchor="middle" font-family="Georgia, serif" font-size="20" fill="#778da9" letter-spacing="4">IMAGE PENDING</text>
+</svg>

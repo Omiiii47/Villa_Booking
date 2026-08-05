@@ -76,7 +76,7 @@ const BookingsPage = () => {
                 <div className="flex flex-col md:flex-row">
                   <div className="md:w-48 h-40 md:h-auto shrink-0">
                     <img
-                      src={booking.villa?.images?.[0] || 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=400'}
+                      src={booking.villa?.images?.[0] || '/img/villa-placeholder.svg'}
                       alt={booking.villa?.name}
                       className="w-full h-full object-cover"
                     />
