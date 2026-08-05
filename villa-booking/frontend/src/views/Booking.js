@@ -11,11 +11,12 @@ const Booking = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
   const slug = searchParams.get('slug');
+  const prefill = { checkIn: searchParams.get('checkIn') || '', checkOut: searchParams.get('checkOut') || '' };
   const [villa, setVilla] = useState(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
-  const [form, setForm] = useState({ checkIn: '', checkOut: '', guests: 2, specialRequests: '' });
+  const [form, setForm] = useState({ checkIn: prefill.checkIn, checkOut: prefill.checkOut, guests: 2, specialRequests: '' });
 
   useEffect(() => {
     if (!slug) { router.push('/villas'); return; }

@@ -4,6 +4,7 @@ import { FaHome, FaUsers, FaCalendarAlt, FaSignOutAlt, FaTrash, FaImage } from '
 import { useAdminAuth } from '../context/AdminAuthContext';
 import * as adminService from '../services/adminService';
 import LandingCmsEditor from '../components/admin/LandingCmsEditor';
+import VillaManager from '../components/admin/VillaManager';
 
 const AdminDashboard = () => {
   const { admin, logout } = useAdminAuth();
@@ -79,6 +80,8 @@ const AdminDashboard = () => {
 
         {tab === 'cms' ? (
           <LandingCmsEditor />
+        ) : tab === 'villas' ? (
+          <VillaManager />
         ) : loading ? (
           <div className="flex justify-center py-20">
             <div className="w-10 h-10 border-2 border-luxury-accent border-t-transparent rounded-full animate-spin" />

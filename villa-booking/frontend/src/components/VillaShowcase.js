@@ -23,7 +23,7 @@ const VillaCard = ({ villa, i }) => {
       viewport={{ once: true, margin: '-50px' }}
       transition={{ duration: 0.8, delay: i * 0.15, ease: [0.25, 0.46, 0.45, 0.94] }}
       whileHover={{ y: -8 }}
-      className="group relative h-[420px] rounded-2xl overflow-hidden cursor-pointer bg-luxury-black"
+      className="group relative h-[480px] rounded-2xl overflow-hidden cursor-pointer bg-luxury-black"
     >
       {imageSrc && (
         <motion.div style={{ y: imageY }} className="absolute inset-0 will-change-transform">
@@ -68,15 +68,16 @@ const VillaCard = ({ villa, i }) => {
         <h3 className="font-display text-xl text-white mb-1">{villa.name}</h3>
         <p className="text-white/60 text-xs mb-1 line-clamp-2">{villa.desc}</p>
         <p className="text-luxury-accent text-xs mb-4">From {villa.price} / night</p>
-        <motion.div
-          initial={{ opacity: 0, x: -10 }}
-          whileInView={{ opacity: 1, x: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5, delay: i * 0.15 + 0.6 }}
-          className="inline-flex items-center gap-2 text-white/80 text-[10px] uppercase tracking-[0.2em] group-hover:gap-3 transition-all duration-300"
-        >
-          <Link href={`/villas/${villa.slug}`} className="flex items-center gap-2">Explore Villa <FaArrowRight className="text-[10px]" /></Link>
-        </motion.div>
+        <div className="flex gap-2">
+          <Link href={`/villas/${villa.slug}?book=1`}
+            className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-luxury-accent text-white text-[10px] uppercase tracking-[0.15em] transition-all hover:bg-luxury-accent/90">
+            Book Now
+          </Link>
+          <Link href={`/villas/${villa.slug}`}
+            className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-white/30 text-white text-[10px] uppercase tracking-[0.15em] hover:bg-white/10 transition-all">
+            Explore Villa <FaArrowRight className="text-[10px]" />
+          </Link>
+        </div>
       </motion.div>
     </motion.div>
   );
@@ -124,4 +125,3 @@ const VillaShowcase = () => {
 };
 
 export default VillaShowcase;
-

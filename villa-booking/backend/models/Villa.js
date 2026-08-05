@@ -17,10 +17,15 @@ const villaSchema = mongoose.Schema(
     location: { type: String, required: [true, 'Please add location'] },
     images: [{ type: String }],
     amenities: [{ type: String }],
+    facilities: [{ type: String }],
+    rules: [{ type: String }],
     featured: { type: Boolean, default: false },
     available: { type: Boolean, default: true },
     rating: { type: Number, default: 0 },
     numReviews: { type: Number, default: 0 },
+    order: { type: Number, default: 0 },
+    showBookNow: { type: Boolean, default: true },
+    showExploreVilla: { type: Boolean, default: true },
   },
   { timestamps: true }
 );

@@ -1,7 +1,7 @@
 'use client'
 import { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { FaEnvelope, FaLock, FaEye, FaEyeSlash } from 'react-icons/fa';
 import { useUserAuth } from '../context/UserAuthContext';
@@ -9,6 +9,8 @@ import { useUserAuth } from '../context/UserAuthContext';
 const Login = () => {
   const { login } = useUserAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirect = searchParams.get('redirect') || '/dashboard';
   const [form, setForm] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
   const [show, setShow] = useState(false);
@@ -16,7 +18,7 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    try { await login(form.email, form.password); router.push('/dashboard'); }
+    try { await login(form.email, form.password); router.push(redirect); }
     catch (err) { setError(err.response?.data?.message || 'Invalid email or password'); }
   };
 

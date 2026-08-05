@@ -1,6 +1,6 @@
 ﻿'use client'
 import { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaStar, FaMapMarkerAlt, FaChevronLeft, FaChevronRight, FaCheck, FaTimes, FaExpand } from 'react-icons/fa';
@@ -12,6 +12,7 @@ import Magnetic from '../components/Magnetic';
 
 const VillaDetails = () => {
   const { slug } = useParams();
+  const searchParams = useSearchParams();
   const { user } = useUserAuth();
   const { isInWishlist, toggle } = useWishlist();
   const [villa, setVilla] = useState(null);
@@ -19,6 +20,7 @@ const VillaDetails = () => {
   const [loading, setLoading] = useState(true);
   const [currentImg, setCurrentImg] = useState(0);
   const [lightbox, setLightbox] = useState(false);
+  const [dates, setDates] = useState({ checkIn: '', checkOut: '' });
 
   useEffect(() => {
     const fetch = async () => {
@@ -30,9 +32,16 @@ const VillaDetails = () => {
       } catch { setVilla(null); }
       setLoading(false);
     };
-    fetch();
+fetch();
     window.scrollTo(0, 0);
   }, [slug]);
+
+  useEffect(() => {
+    if (searchParams.get('book') === '1' && !loading && villa) {
+      const el = document.getElementById('villa-booking');
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [searchParams, loading, villa]);
 
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center">
@@ -142,6 +151,35 @@ const VillaDetails = () => {
                 </div>
               )}
 
+              {villa.facilities?.length > 0 && (
+                <div className="mb-12">
+                  <h2 className="font-display text-2xl mb-5">Facilities</h2>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    {villa.facilities.map((f, i) => (
+                      <motion.div key={f} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.02 }}
+                        className="flex items-center gap-2 text-gray-500 group">
+                        <FaCheck className="text-luxury-accent text-xs group-hover:rotate-12 transition-transform" /> {f}
+                      </motion.div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {villa.rules?.length > 0 && (
+                <div className="mb-12">
+                  <h2 className="font-display text-2xl mb-5">House Rules</h2>
+                  <div className="space-y-3">
+                    {villa.rules.map((r, i) => (
+                      <motion.div key={r} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.03 }}
+                        className="flex items-center gap-3 text-gray-500">
+                        <span className="w-5 h-5 rounded-full bg-luxury-cream flex items-center justify-center text-[10px] text-luxury-accent font-semibold">{i + 1}</span>
+                        {r}
+                      </motion.div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {reviews.length > 0 && (
                 <div>
                   <h2 className="font-display text-2xl mb-6">Guest Reviews</h2>
@@ -167,19 +205,46 @@ const VillaDetails = () => {
             </div>
 
             <div>
-              <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }} className="sticky top-28">
+              <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }} className="sticky top-28" id="villa-booking">
                 <div className="card-premium p-8">
                   <div className="mb-6">
                     <span className="font-display text-4xl text-luxury-black">${villa.pricePerNight}</span>
                     <span className="text-gray-400"> / night</span>
                   </div>
-                  <Magnetic>
-                    <Link href={user ? `/booking?slug=${villa.slug}` : '/login'}
-                      className="btn-primary w-full text-center block text-[10px]">
-                      <span>{user ? 'Book Now' : 'Sign In to Book'}</span>
-                    </Link>
-                  </Magnetic>
-                  <p className="text-gray-400 text-xs text-center mt-3">No hidden fees Â· Free cancellation</p>
+                  {user ? (
+                    <form className="space-y-4">
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="text-xs text-gray-400 block mb-1">Check-In</label>
+                          <input type="date" min={new Date().toISOString().split('T')[0]} required
+                            value={dates.checkIn}
+                            onChange={(e) => setDates({ ...dates, checkIn: e.target.value })}
+                            className="input-field !py-2 text-xs" />
+                        </div>
+                        <div>
+                          <label className="text-xs text-gray-400 block mb-1">Check-Out</label>
+                          <input type="date" min={dates.checkIn || new Date().toISOString().split('T')[0]} required
+                            value={dates.checkOut}
+                            onChange={(e) => setDates({ ...dates, checkOut: e.target.value })}
+                            className="input-field !py-2 text-xs" />
+                        </div>
+                      </div>
+                      <Magnetic>
+                        <Link href={`/booking?slug=${villa.slug}&checkIn=${dates.checkIn}&checkOut=${dates.checkOut}`}
+                          className="btn-primary w-full text-center block text-[10px]">
+                          <span>Book Now</span>
+                        </Link>
+                      </Magnetic>
+                    </form>
+                  ) : (
+                    <Magnetic>
+                      <Link href={`/login?redirect=/villas/${villa.slug}?book=1`}
+                        className="btn-primary w-full text-center block text-[10px]">
+                        <span>Sign In to Book</span>
+                      </Link>
+                    </Magnetic>
+                  )}
+                  <p className="text-gray-400 text-xs text-center mt-3">No hidden fees · Free cancellation</p>
                   <div className="mt-6 pt-6 border-t border-gray-100">
                     <h4 className="font-body font-semibold text-sm mb-3">Highlights</h4>
                     <ul className="space-y-2 text-sm text-gray-500">

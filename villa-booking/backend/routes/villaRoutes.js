@@ -10,7 +10,7 @@ const {
   getFeaturedVillas,
 } = require('../controllers/villaController');
 const { adminProtect } = require('../middleware/adminAuth');
-const upload = require('../middleware/upload');
+const uploadMemory = require('../middleware/uploadMemory');
 
 const router = express.Router();
 
@@ -21,6 +21,6 @@ router.get('/:id', getVillaById);
 router.post('/', adminProtect, createVilla);
 router.put('/:id', adminProtect, updateVilla);
 router.delete('/:id', adminProtect, deleteVilla);
-router.post('/upload-images', adminProtect, upload.array('images', 10), uploadImages);
+router.post('/upload-images', adminProtect, uploadMemory.array('images', 10), uploadImages);
 
 module.exports = router;

@@ -1,4 +1,5 @@
 const Villa = require('../models/Villa');
+const cloudinary = require('../utils/cloudinary');
 
 const getVillas = async (req, res) => {
   try {
@@ -17,7 +18,7 @@ const getVillas = async (req, res) => {
     if (sort === 'price_asc') sortOption.pricePerNight = 1;
     else if (sort === 'price_desc') sortOption.pricePerNight = -1;
     else if (sort === 'rating') sortOption.rating = -1;
-    else sortOption.createdAt = -1;
+    else sortOption = { order: 1, createdAt: -1 };
 
     const total = await Villa.countDocuments(query);
     const villas = await Villa.find(query)
@@ -72,7 +73,11 @@ const createVilla = async (req, res) => {
 
 const updateVilla = async (req, res) => {
   try {
-    const villa = await Villa.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
+    const body = { ...req.body };
+    if (body.name) {
+      body.slug = body.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    }
+    const villa = await Villa.findByIdAndUpdate(req.params.id, body, { new: true, runValidators: true });
     if (!villa) {
       return res.status(404).json({ message: 'Villa not found' });
     }
@@ -100,8 +105,13 @@ const uploadImages = async (req, res) => {
     if (!files || files.length === 0) {
       return res.status(400).json({ message: 'No files uploaded' });
     }
-    const paths = files.map((file) => `${req.protocol}://${req.get('host')}/uploads/${file.filename}`);
-    res.json({ images: paths });
+    if (!cloudinary.isConfigured()) {
+      return res.status(500).json({ message: 'Cloudinary is not configured on the server' });
+    }
+    const results = await Promise.all(
+      files.map((file) => cloudinary.uploadImage(file.buffer, 'solscape/villas'))
+    );
+    res.json({ images: results.map((r) => r.secure_url), publicIds: results.map((r) => r.public_id) });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

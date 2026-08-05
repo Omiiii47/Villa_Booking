@@ -14,9 +14,9 @@ const slugify = (name) =>
 
 const villas = [
   {
-    name: 'The Grand Horizon',
+    name: 'Horizon',
     shortDescription: 'A breathtaking cliffside retreat with panoramic ocean views',
-    description: 'Perched on the edge of a dramatic cliff, The Grand Horizon offers an unparalleled experience of luxury living above the sea. Floor-to-ceiling windows frame endless ocean vistas, while infinity pools blend seamlessly with the horizon. Every detail, from the hand-carved stone bathtubs to the private rooftop observatory, has been crafted to inspire wonder.',
+    description: 'Perched on the edge of a dramatic cliff, Horizon offers an unparalleled experience of luxury living above the sea. Floor-to-ceiling windows frame endless ocean vistas, while infinity pools blend seamlessly with the horizon. Every detail, from the hand-carved stone bathtubs to the private rooftop observatory, has been crafted to inspire wonder.',
     pricePerNight: 2500,
     capacity: 8,
     bedrooms: 4,
@@ -29,6 +29,8 @@ const villas = [
       'https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?w=1200',
     ],
     amenities: ['Infinity Pool', 'Ocean View', 'Private Chef', 'Spa', 'Wine Cellar', 'Home Theater', 'Gym', 'Helipad'],
+    facilities: ['Infinity Pool', 'Private Gym', 'Helipad', 'Wine Cellar', 'Home Theater', 'Spa & Wellness'],
+    rules: ['Check-in 3 PM', 'Check-out 11 AM', 'No smoking indoors', 'Quiet hours 10 PM - 8 AM', 'No parties without approval'],
     featured: true,
     rating: 4.9,
     numReviews: 24,
@@ -49,6 +51,8 @@ const villas = [
       'https://images.unsplash.com/photo-1600566752355-35792bedcfea?w=1200',
     ],
     amenities: ['Canopy Pool', 'Forest Spa', 'Yoga Pavilion', 'Private Guide', 'Outdoor Shower', 'Fire Pit', 'Hammock Garden'],
+    facilities: ['Canopy Pool', 'Forest Spa', 'Yoga Pavilion', 'Outdoor Shower', 'Fire Pit'],
+    rules: ['Check-in 2 PM', 'Check-out 12 PM', 'No open flames', 'Nature-friendly policy', 'Outdoor shoes not allowed indoors'],
     featured: true,
     rating: 4.8,
     numReviews: 18,
@@ -69,6 +73,8 @@ const villas = [
       'https://images.unsplash.com/photo-1600607687644-cd4f1e1b1b1a?w=1200',
     ],
     amenities: ['Private Beach', 'Infinity Pool', 'Tennis Court', 'Boat Dock', 'Outdoor Kitchen', 'Beach Bar', 'Water Sports', 'Library'],
+    facilities: ['Private Beach', 'Infinity Pool', 'Tennis Court', 'Boat Dock', 'Outdoor Kitchen', 'Beach Bar'],
+    rules: ['Check-in 3 PM', 'Check-out 11 AM', 'No smoking in rooms', 'Life jackets for water activities', 'Sand-free policy for interiors'],
     featured: true,
     rating: 5.0,
     numReviews: 31,
@@ -89,6 +95,8 @@ const villas = [
       'https://images.unsplash.com/photo-1600566753086-00f18f6b8a1a?w=1200',
     ],
     amenities: ['Hot Springs', 'Ski-in/Ski-out', 'Wine Grotto', 'Game Room', 'Library', 'Sauna', 'Steam Room', 'Fireplace'],
+    facilities: ['Hot Springs', 'Ski-in/Ski-out', 'Sauna', 'Steam Room', 'Game Room', 'Wine Grotto'],
+    rules: ['Check-in 4 PM', 'Check-out 10 AM', 'No footwear on loft stairs', 'Ski equipment cleaned before entry', 'Fireplace attended at all times'],
     featured: true,
     rating: 4.7,
     numReviews: 15,
@@ -109,6 +117,8 @@ const villas = [
       'https://images.unsplash.com/photo-1600585154526-990dced4db0d?w=1200',
     ],
     amenities: ['Plunge Pool', 'Stargazing Deck', 'Private Spa', 'Desert Tours', 'Outdoor Cinema', 'Fire Pit', 'Tennis Court'],
+    facilities: ['Plunge Pool', 'Stargazing Deck', 'Outdoor Cinema', 'Private Spa', 'Tennis Court'],
+    rules: ['Check-in 2 PM', 'Check-out 11 AM', 'Water conservation encouraged', 'No drones', 'Evening fire pit hours until midnight'],
     featured: false,
     rating: 4.6,
     numReviews: 12,
@@ -129,6 +139,8 @@ const villas = [
       'https://images.unsplash.com/photo-1600607687644-cd4f1e1b1b1a?w=1200',
     ],
     amenities: ['Meditation Garden', 'Tea House', 'Onsen', 'Bamboo Forest', 'Yoga Studio', 'Koi Pond', 'Sake Bar'],
+    facilities: ['Meditation Garden', 'Tea House', 'Onsen', 'Bamboo Forest', 'Yoga Studio', 'Koi Pond'],
+    rules: ['Check-in 3 PM', 'Check-out 11 AM', 'Silence maintained indoors', 'Shoes removed at entry', 'Sake bar closes at 11 PM'],
     featured: false,
     rating: 4.9,
     numReviews: 21,
@@ -149,6 +161,8 @@ const villas = [
       'https://images.unsplash.com/photo-1615571022219-eb45cf7faa36?w=1200',
     ],
     amenities: ['Cliffside Pool', 'Mediterranean Garden', 'Wine Cellar', 'Outdoor Dining', 'Pizza Oven', 'Library', 'Sunset Deck'],
+    facilities: ['Cliffside Pool', 'Mediterranean Garden', 'Wine Cellar', 'Outdoor Dining', 'Pizza Oven', 'Sunset Deck'],
+    rules: ['Check-in 3 PM', 'Check-out 11 AM', 'No smoking', 'Pool hours 8 AM - 10 PM', 'Glassware kept away from pool edge'],
     featured: false,
     rating: 4.8,
     numReviews: 27,
@@ -169,6 +183,8 @@ const villas = [
       'https://images.unsplash.com/photo-1600585154526-990dced4db0d?w=1200',
     ],
     amenities: ['Glass Pool', 'Rooftop Terrace', 'Art Studio', 'Wine Fridge', 'Smart Home', 'Acoustic System', 'Infinity Edge'],
+    facilities: ['Glass Pool', 'Rooftop Terrace', 'Art Studio', 'Smart Home', 'Acoustic System'],
+    rules: ['Check-in 3 PM', 'Check-out 11 AM', 'No smoking indoors', 'No pets due to glass surfaces', 'Smart home guided tour on arrival'],
     featured: false,
     rating: 4.7,
     numReviews: 14,
@@ -195,7 +211,7 @@ const seedDB = async () => {
     await Villa.deleteMany({});
     await Amenity.deleteMany({});
 
-    await Villa.create(villas.map(v => ({ ...v, slug: slugify(v.name) })));
+    await Villa.create(villas.map((v, i) => ({ ...v, slug: slugify(v.name), order: i + 1 })));
     await Amenity.insertMany(amenities);
 
     const adminExists = await Admin.findOne({ email: 'admin@villabooking.com' });
