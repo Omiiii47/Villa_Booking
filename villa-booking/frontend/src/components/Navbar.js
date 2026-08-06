@@ -12,6 +12,7 @@ const Navbar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [hidden, setHidden] = useState(false);
   const location = usePathname();
+  const isHome = location === '/';
 
   useEffect(() => {
     let lastScroll = 0;
@@ -43,7 +44,7 @@ const Navbar = () => {
         animate={{ y: hidden ? -120 : 0 }}
         transition={{ duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-700 ${
-          scrolled ? 'glass-premium shadow-sm' : 'bg-transparent'
+          scrolled || !isHome ? 'glass-premium shadow-sm' : 'bg-transparent'
         }`}
       >
         <div className="luxury-container">
@@ -61,9 +62,9 @@ const Navbar = () => {
                   key={link.href}
                   href={link.href}
                   className={`relative px-5 py-2 font-body text-xs uppercase tracking-[0.2em] font-medium transition-all duration-300 ${
-                    isActive(link.href)
+isActive(link.href)
                       ? 'text-luxury-accent'
-                      : scrolled
+                      : scrolled || !isHome
                       ? 'text-luxury-black/70 hover:text-luxury-black'
                       : 'text-white/70 hover:text-white'
                   }`}
@@ -78,7 +79,7 @@ const Navbar = () => {
                 {user ? (
                   <>
                     <Link href="/dashboard" className={`font-body text-xs uppercase tracking-[0.2em] font-medium transition-colors ${
-                      scrolled ? 'text-luxury-black/70 hover:text-luxury-black' : 'text-white/70 hover:text-white'
+                      scrolled || !isHome ? 'text-luxury-black/70 hover:text-luxury-black' : 'text-white/70 hover:text-white'
                     }`}>
                       Dashboard
                     </Link>
@@ -100,7 +101,9 @@ const Navbar = () => {
 
             <button
               onClick={() => setMobileOpen(!mobileOpen)}
-              className="lg:hidden relative w-12 h-12 flex items-center justify-center rounded-full transition-all duration-500 text-luxury-black hover:bg-black/5"
+              className={`lg:hidden relative w-12 h-12 flex items-center justify-center rounded-full transition-all duration-500 hover:bg-black/5 ${
+                isHome && !scrolled ? 'text-white' : 'text-luxury-black'
+              }`}
             >
               <div className="flex flex-col items-center gap-1">
                 <motion.span animate={mobileOpen ? { rotate: 45, y: 5.5 } : { rotate: 0, y: 0 }} className="block w-5 h-[1.5px] bg-current" />
