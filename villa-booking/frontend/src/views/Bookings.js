@@ -8,14 +8,18 @@ import { getUserBookings, cancelBooking } from '../services/bookingService';
 
 const statusColors = {
   pending: 'bg-yellow-100 text-yellow-700',
+  'pending-custom': 'bg-orange-100 text-orange-700',
   confirmed: 'bg-green-100 text-green-700',
+  rejected: 'bg-gray-300 text-gray-700',
   cancelled: 'bg-red-100 text-red-700',
   completed: 'bg-gray-100 text-gray-700',
 };
 
 const statusLabels = {
   pending: 'Pending',
+  'pending-custom': 'Pending - Custom Booking',
   confirmed: 'Confirmed',
+  rejected: 'Rejected',
   cancelled: 'Cancelled',
   completed: 'Completed',
 };
@@ -91,15 +95,36 @@ const BookingsPage = () => {
                         <div className="flex flex-wrap gap-4 text-sm text-gray-500">
                           <span>Check-in: {new Date(booking.checkIn).toLocaleDateString()}</span>
                           <span>Check-out: {new Date(booking.checkOut).toLocaleDateString()}</span>
-                          <span>{booking.guests} guests</span>
+                          <span>{booking.guests} guests{booking.adults ? ` (${booking.adults} adults${booking.kids ? ` · ${booking.kids} children` : ''}${booking.infants ? ` · ${booking.infants} infants` : ''}${booking.pets ? ` · ${booking.pets} pets` : ''})` : ''}</span>
                         </div>
                         <p className="font-display text-xl mt-3">${booking.totalPrice?.toLocaleString()}</p>
+                        {booking.isCustomBooking && (
+                          <div className="mt-3 max-w-sm p-3 rounded-xl bg-orange-50 border border-orange-200">
+                            <p className="text-sm text-orange-800 font-medium mb-1">Custom booking request</p>
+                            <p className="text-xs text-orange-700">
+                              {booking.standardCapacity} guests capacity · {booking.requestedGuests} requested ({booking.extraGuests} extra)
+                              {booking.requiresManualReview ? ' · Awaiting Sales Team review' : ''}
+                            </p>
+                          </div>
+                        )}
+                        {booking.customPricing?.offerMessage && (
+                          <div className="mt-3 max-w-sm p-3 rounded-xl bg-blue-50 border border-blue-200">
+                            <p className="text-sm text-blue-800 font-medium mb-1">Your booking offer</p>
+                            <p className="text-xs text-blue-700">{booking.customPricing.offerMessage}</p>
+                            {booking.customPricing.totalAmount > 0 && (
+                              <p className="text-sm font-medium text-blue-800 mt-2">Total offer: ${booking.customPricing.totalAmount.toLocaleString()}</p>
+                            )}
+                          </div>
+                        )}
+                        {booking.status === 'rejected' && booking.approvalReason && (
+                          <p className="mt-3 text-xs text-red-600 bg-red-50 border border-red-200 rounded-xl p-3">Reason: {booking.approvalReason}</p>
+                        )}
                       </div>
                       <div className="flex flex-col items-start md:items-end gap-3">
                         <span className={`text-xs uppercase tracking-widest px-3 py-1.5 rounded-full ${statusColors[booking.status]}`}>
                           {statusLabels[booking.status]}
                         </span>
-                        {(booking.status === 'pending' || booking.status === 'confirmed') && (
+                        {(booking.status === 'pending' || booking.status === 'pending-custom' || booking.status === 'confirmed') && (
                           <button onClick={() => handleCancel(booking._id)}
                             className="flex items-center gap-1 text-red-400 text-xs hover:text-red-600 transition-colors">
                             <FaTimes /> Cancel Booking

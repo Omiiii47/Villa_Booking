@@ -1,7 +1,7 @@
 const jwt = require('jsonwebtoken');
 const Admin = require('../models/Admin');
 
-const adminProtect = async (req, res, next) => {
+const verifyAdminToken = async (req, res, next) => {
   let token;
 
   if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
@@ -27,4 +27,22 @@ const adminProtect = async (req, res, next) => {
   }
 };
 
-module.exports = { adminProtect };
+const adminProtect = async (req, res, next) => {
+  await verifyAdminToken(req, res, () => {
+    if (req.admin.role !== 'admin') {
+      return res.status(403).json({ message: 'Not authorized, admin role required' });
+    }
+    next();
+  });
+};
+
+const salesProtect = async (req, res, next) => {
+  await verifyAdminToken(req, res, () => {
+    if (req.admin.role !== 'sales') {
+      return res.status(403).json({ message: 'Not authorized, sales role required' });
+    }
+    next();
+  });
+};
+
+module.exports = { adminProtect, salesProtect };

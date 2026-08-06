@@ -1,10 +1,11 @@
 ﻿'use client'
 import { useState, useEffect, useCallback } from 'react';
-import { FaHome, FaUsers, FaCalendarAlt, FaSignOutAlt, FaTrash, FaImage } from 'react-icons/fa';
+import { FaHome, FaUsers, FaSignOutAlt, FaTrash, FaImage, FaHandshake } from 'react-icons/fa';
 import { useAdminAuth } from '../context/AdminAuthContext';
 import * as adminService from '../services/adminService';
 import LandingCmsEditor from '../components/admin/LandingCmsEditor';
 import VillaManager from '../components/admin/VillaManager';
+import SalesTeamManager from '../components/admin/SalesTeamManager';
 
 const AdminDashboard = () => {
   const { admin, logout } = useAdminAuth();
@@ -18,7 +19,6 @@ const AdminDashboard = () => {
       let data;
       switch (tab) {
         case 'villas': data = await adminService.getVillas({ limit: 50 }); setItems(data.villas); break;
-        case 'bookings': data = await adminService.getBookings(); setItems(data.bookings); break;
         case 'users': data = await adminService.getUsers(); setItems(data.users); break;
         default: setItems([]);
       }
@@ -35,7 +35,6 @@ const AdminDashboard = () => {
     if (!window.confirm('Are you sure?')) return;
     try {
       if (type === 'villas') await adminService.deleteVilla(id);
-      else if (type === 'bookings') await adminService.deleteBooking(id);
       else if (type === 'users') await adminService.deleteUser(id);
       fetchData();
     } catch { alert('Failed to delete'); }
@@ -43,8 +42,8 @@ const AdminDashboard = () => {
 
   const tabs = [
     { id: 'villas', label: 'Villas', icon: FaHome },
-    { id: 'bookings', label: 'Bookings', icon: FaCalendarAlt },
     { id: 'users', label: 'Users', icon: FaUsers },
+    { id: 'sales-team', label: 'Sales Team', icon: FaHandshake },
     { id: 'cms', label: 'Landing CMS', icon: FaImage },
   ];
 
@@ -82,6 +81,8 @@ const AdminDashboard = () => {
           <LandingCmsEditor />
         ) : tab === 'villas' ? (
           <VillaManager />
+        ) : tab === 'sales-team' ? (
+          <SalesTeamManager />
         ) : loading ? (
           <div className="flex justify-center py-20">
             <div className="w-10 h-10 border-2 border-luxury-accent border-t-transparent rounded-full animate-spin" />
@@ -92,53 +93,24 @@ const AdminDashboard = () => {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="bg-luxury-cream">
-                    {tab === 'villas' && <><th className="text-left p-4 font-medium">Name</th><th className="text-left p-4 font-medium">Price</th><th className="text-left p-4 font-medium">Location</th><th className="text-left p-4 font-medium">Rating</th><th className="text-right p-4 font-medium">Actions</th></>}
-                    {tab === 'bookings' && <><th className="text-left p-4 font-medium">Guest</th><th className="text-left p-4 font-medium">Villa</th><th className="text-left p-4 font-medium">Dates</th><th className="text-left p-4 font-medium">Status</th><th className="text-left p-4 font-medium">Total</th><th className="text-right p-4 font-medium">Actions</th></>}
-                    {tab === 'users' && <><th className="text-left p-4 font-medium">Name</th><th className="text-left p-4 font-medium">Email</th><th className="text-right p-4 font-medium">Actions</th></>}
+                    <th className="text-left p-4 font-medium">Name</th>
+                    <th className="text-left p-4 font-medium">Email</th>
+                    <th className="text-right p-4 font-medium">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {items.map((item) => (
                     <tr key={item._id} className="border-t border-gray-100 hover:bg-gray-50">
-                      {tab === 'villas' && (
-                        <>
-                          <td className="p-4 font-medium">{item.name}</td>
-                          <td className="p-4">${item.pricePerNight}</td>
-                          <td className="p-4 text-gray-500">{item.location}</td>
-                          <td className="p-4">{item.rating} ({item.numReviews})</td>
-                          <td className="p-4 text-right">
-                            <button onClick={() => handleDelete(item._id, 'villas')} className="text-red-400 hover:text-red-600"><FaTrash /></button>
-                          </td>
-                        </>
-                      )}
-                      {tab === 'bookings' && (
-                        <>
-                          <td className="p-4 font-medium">{item.user?.name || 'N/A'}</td>
-                          <td className="p-4">{item.villa?.name || 'N/A'}</td>
-                          <td className="p-4 text-gray-500">{new Date(item.checkIn).toLocaleDateString()} - {new Date(item.checkOut).toLocaleDateString()}</td>
-                          <td className="p-4"><span className={`text-xs uppercase tracking-widest px-2 py-1 rounded-full ${
-                            item.status === 'confirmed' ? 'bg-green-100 text-green-700' : item.status === 'cancelled' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'
-                          }`}>{item.status}</span></td>
-                          <td className="p-4">${item.totalPrice}</td>
-                          <td className="p-4 text-right">
-                            <button onClick={() => handleDelete(item._id, 'bookings')} className="text-red-400 hover:text-red-600"><FaTrash /></button>
-                          </td>
-                        </>
-                      )}
-                      {tab === 'users' && (
-                        <>
-                          <td className="p-4 font-medium">{item.name}</td>
-                          <td className="p-4 text-gray-500">{item.email}</td>
-                          <td className="p-4 text-right">
-                            <button onClick={() => handleDelete(item._id, 'users')} className="text-red-400 hover:text-red-600"><FaTrash /></button>
-                          </td>
-                        </>
-                      )}
+                      <td className="p-4 font-medium">{item.name}</td>
+                      <td className="p-4 text-gray-500">{item.email}</td>
+                      <td className="p-4 text-right">
+                        <button onClick={() => handleDelete(item._id, 'users')} className="text-red-400 hover:text-red-600"><FaTrash /></button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
-              {items.length === 0 && <p className="text-center text-gray-400 py-10">No items found.</p>}
+              {items.length === 0 && <p className="text-center text-gray-400 py-10">No users found.</p>}
             </div>
           </div>
         )}

@@ -25,18 +25,18 @@ export const uploadImages = async (formData) => {
   return data;
 };
 
-export const getBookings = async (params = {}) => {
-  const { data } = await adminApi.get('/admin/bookings', { params });
+export const getSalesTeam = async () => {
+  const { data } = await adminApi.get('/admin/sales-team');
   return data;
 };
 
-export const updateBookingStatus = async (id, status) => {
-  const { data } = await adminApi.put(`/admin/bookings/${id}/status`, { status });
+export const createSalesTeam = async (memberData) => {
+  const { data } = await adminApi.post('/admin/sales-team', memberData);
   return data;
 };
 
-export const deleteBooking = async (id) => {
-  const { data } = await adminApi.delete(`/admin/bookings/${id}`);
+export const deleteSalesTeam = async (id) => {
+  const { data } = await adminApi.delete(`/admin/sales-team/${id}`);
   return data;
 };
 

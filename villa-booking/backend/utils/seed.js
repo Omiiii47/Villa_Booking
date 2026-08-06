@@ -220,6 +220,17 @@ const seedDB = async () => {
         name: 'Admin',
         email: 'admin@villabooking.com',
         password: 'admin123',
+        role: 'admin',
+      });
+    }
+
+    const salesExists = await Admin.findOne({ email: 'sales@villabooking.com' });
+    if (!salesExists) {
+      await Admin.create({
+        name: 'Sales Team',
+        email: 'sales@villabooking.com',
+        password: 'sales123',
+        role: 'sales',
       });
     }
 

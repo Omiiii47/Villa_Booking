@@ -1,7 +1,11 @@
 const express = require('express');
-const { listBookings, updateBookingStatus, deleteBooking } = require('../controllers/adminBookingController');
 const { deleteReview } = require('../controllers/adminReviewController');
 const { getLanding, updateLanding, uploadCmsImage, deleteCmsImage } = require('../controllers/cmsController');
+const {
+  listSalesTeam,
+  createSalesTeamMember,
+  deleteSalesTeamMember,
+} = require('../controllers/adminSalesTeamController');
 const { adminProtect } = require('../middleware/adminAuth');
 const uploadMemory = require('../middleware/uploadMemory');
 
@@ -14,9 +18,9 @@ router.put('/cms', updateLanding);
 router.post('/cms/upload', uploadMemory.single('image'), uploadCmsImage);
 router.delete('/cms/image', deleteCmsImage);
 
-router.get('/bookings', listBookings);
-router.put('/bookings/:id/status', updateBookingStatus);
-router.delete('/bookings/:id', deleteBooking);
+router.get('/sales-team', listSalesTeam);
+router.post('/sales-team', createSalesTeamMember);
+router.delete('/sales-team/:id', deleteSalesTeamMember);
 
 router.delete('/reviews/:id', deleteReview);
 

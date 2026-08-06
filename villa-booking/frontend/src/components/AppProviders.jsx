@@ -2,6 +2,7 @@
 
 import { UserAuthProvider } from '../context/UserAuthContext';
 import { AdminAuthProvider } from '../context/AdminAuthContext';
+import { SalesAuthProvider } from '../context/SalesAuthContext';
 import { WishlistProvider } from '../context/WishlistContext';
 import ScrollToTop from './ScrollToTop';
 import Cursor from './Cursor';
@@ -12,14 +13,16 @@ const AppProviders = ({ children }) => {
   return (
     <UserAuthProvider>
       <AdminAuthProvider>
-        <WishlistProvider>
-          <ScrollToTop />
-          <Cursor />
-          <SmoothScroll />
-          <div className="noise-overlay" />
-          {children}
-          <WhatsAppButton />
-        </WishlistProvider>
+        <SalesAuthProvider>
+          <WishlistProvider>
+            <ScrollToTop />
+            <Cursor />
+            <SmoothScroll />
+            <div className="noise-overlay" />
+            {children}
+            <WhatsAppButton />
+          </WishlistProvider>
+        </SalesAuthProvider>
       </AdminAuthProvider>
     </UserAuthProvider>
   );

@@ -3,7 +3,20 @@ const Villa = require('../models/Villa');
 
 const createBooking = async (req, res) => {
   try {
-    const { villa: villaId, checkIn, checkOut, guests, specialRequests } = req.body;
+    const {
+      villa: villaId,
+      checkIn,
+      checkOut,
+      adults,
+      kids,
+      infants,
+      pets,
+      purposeOfStay,
+      arrivalTime,
+      customerPhone,
+      customerCountry,
+      specialRequests,
+    } = req.body;
 
     const villa = await Villa.findById(villaId);
     if (!villa) {
@@ -18,11 +31,19 @@ const createBooking = async (req, res) => {
     }
 
     const nights = Math.ceil((checkOutDate - checkInDate) / (1000 * 60 * 60 * 24));
-    const totalPrice = nights * villa.pricePerNight;
+    const estimatedPrice = nights * villa.pricePerNight;
+
+    const adultsCount = Number(adults) || 1;
+    const kidsCount = Number(kids) || 0;
+    const infantsCount = Number(infants) || 0;
+    const petsCount = Number(pets) || 0;
+    const guestCount = Math.max(1, adultsCount + kidsCount + infantsCount);
+    const isOverCapacity = guestCount > villa.capacity;
+    const extraGuests = isOverCapacity ? guestCount - villa.capacity : 0;
 
     const overlapping = await Booking.findOne({
       villa: villaId,
-      status: { $in: ['pending', 'confirmed'] },
+      status: { $in: ['pending', 'pending-custom', 'confirmed'] },
       $or: [
         { checkIn: { $lt: checkOutDate }, checkOut: { $gt: checkInDate } },
       ],
@@ -37,12 +58,50 @@ const createBooking = async (req, res) => {
       villa: villaId,
       checkIn,
       checkOut,
-      guests,
-      totalPrice,
+      nights,
+      guests: guestCount,
+      adults: adultsCount,
+      kids: kidsCount,
+      infants: infantsCount,
+      pets: petsCount,
+      totalPrice: estimatedPrice,
+      estimatedPrice,
+      customerName: req.user.name,
+      customerEmail: req.user.email,
+      customerPhone,
+      customerCountry,
+      purposeOfStay,
+      arrivalTime,
       specialRequests,
+      status: 'pending',
+      isCustomBooking: isOverCapacity,
+      requiresManualReview: isOverCapacity,
+      standardCapacity: isOverCapacity ? villa.capacity : undefined,
+      requestedGuests: isOverCapacity ? guestCount : undefined,
+      extraGuests: isOverCapacity ? extraGuests : undefined,
+      customPricing: isOverCapacity
+        ? {
+            basePrice: villa.pricePerNight,
+            extraGuestFee: 0,
+            extraGuestCount: extraGuests,
+            cleaningFee: 0,
+            additionalServices: 0,
+            housekeepingCharges: 0,
+            beddingCharges: 0,
+            securityCharges: 0,
+            transportation: 0,
+            chefServices: 0,
+            decoration: 0,
+            airportPickup: 0,
+            discount: 0,
+            complimentaryServices: '',
+            totalPerNight: villa.pricePerNight,
+            totalAmount: estimatedPrice,
+          }
+        : undefined,
     });
 
-    const populated = await Booking.findById(booking._id).populate('villa', 'name images pricePerNight');
+    const populated = await Booking.findById(booking._id).populate('villa', 'name images pricePerNight capacity location');
     res.status(201).json(populated);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -52,6 +111,7 @@ const createBooking = async (req, res) => {
 const getUserBookings = async (req, res) => {
   try {
     const bookings = await Booking.find({ user: req.user._id })
+      .select('-internalNotes')
       .populate('villa', 'name images pricePerNight location slug')
       .sort({ createdAt: -1 });
     res.json(bookings);
@@ -63,6 +123,7 @@ const getUserBookings = async (req, res) => {
 const getBookingById = async (req, res) => {
   try {
     const booking = await Booking.findById(req.params.id)
+      .select('-internalNotes')
       .populate('villa', 'name images pricePerNight location slug description')
       .populate('user', 'name email phone');
 

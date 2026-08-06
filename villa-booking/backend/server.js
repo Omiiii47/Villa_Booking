@@ -30,6 +30,7 @@ app.use('/api/users', require('./routes/userRoutes'));
 app.use('/api/contact', require('./routes/contactRoutes'));
 app.use('/api/cms', require('./routes/cmsRoutes'));
 app.use('/api/admin', require('./routes/adminRoutes'));
+app.use('/api/sales', require('./routes/salesRoutes'));
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', message: 'Villa Booking API is running' });
