@@ -36,30 +36,54 @@ const bookingSchema = mongoose.Schema(
      */
     status: {
       type: String,
-      enum: ['pending', 'pending-custom', 'payment-pending', 'confirmed', 'rejected', 'cancelled', 'completed'],
+      enum: ['pending', 'pending-custom', 'payment-pending', 'confirmed', 'rejected', 'cancelled', 'completed', 'requested', 'under-review', 'approved', 'expired'],
       default: 'pending',
     },
 
     /**
-     * Independent lifecycle axes — review and booking are NEVER mixed.
-     * reviewStatus is controlled only by the Sales Team. bookingStatus tracks
-     * the real booking lifecycle through payment / cancellation / completion.
+     * Single canonical lifecycle. `reviewStatus` is controlled only by the
+     * Sales Team; `bookingStatus` is the source of truth for the customer's
+     * booking lifecycle (wealth whose dates hold/block a villa).
+     *
+     * - REQUESTED:      submitted, awaiting Sales review (dates NOT held)
+     * - UNDER_REVIEW:   Sales opened/handling it (dates still NOT held)
+     * - APPROVED:       Sales approved; no payment link yet (dates NOT held)
+     * - PAYMENT_PENDING:payment link sent → dates held (YELLOW), hold window
+     * - CONFIRMED:      first successful payment → dates locked (RED)
+     * - CANCELLED:      cancelled before completion (dates released)
+     * - EXPIRED:        payment attempt expired/failed → dates released
+     * - COMPLETED:      stay finished
      */
+    bookingStatus: {
+      type: String,
+      enum: ['REQUESTED', 'UNDER_REVIEW', 'APPROVED', 'PAYMENT_PENDING', 'CONFIRMED', 'CANCELLED', 'EXPIRED', 'COMPLETED'],
+      default: 'REQUESTED',
+    },
     reviewStatus: {
       type: String,
       enum: ['PENDING', 'APPROVED', 'REJECTED'],
       default: 'PENDING',
-    },
-    bookingStatus: {
-      type: String,
-      enum: ['PAYMENT_PENDING', 'CONFIRMED', 'CANCELLED', 'COMPLETED'],
-      default: 'PAYMENT_PENDING',
     },
     paymentStatus: {
       type: String,
       enum: ['UNPAID', 'PENDING', 'LINK_SENT', 'LINK_EXPIRED', 'PAID', 'FAILED', 'REFUNDED'],
       default: 'UNPAID',
     },
+    /**
+     * Payment hold — dates are reserved (yelled "Payment in Progress") from
+     * the moment a payment link is sent until the first payment lands or the
+     * hold window elapses. `paymentHoldStartedAt` and `paymentHoldExpiresAt`
+     * bound the window; after expiry a reaper flips the booking to EXPIRED and
+     * releases the dates.
+     */
+    paymentHoldStartedAt: { type: Date },
+    paymentHoldExpiresAt: { type: Date },
+    /**
+     * Transient guard used by the "first payment wins" webhook: set to the
+     * Razorpay payment id once a confirmation has been (or is being) applied,
+     * so duplicate webhook deliveries cannot double-confirm.
+     */
+    paymentProcessedId: { type: String },
     paymentId: { type: String },
     paymentLink: { type: String },
     paymentLinkId: { type: String },
@@ -154,8 +178,11 @@ bookingSchema.pre('save', async function () {
     else if (this.bookingStatus === 'CANCELLED') this.status = 'cancelled';
     else if (this.bookingStatus === 'COMPLETED') this.status = 'completed';
     else if (this.bookingStatus === 'CONFIRMED') this.status = 'confirmed';
-    else if (this.reviewStatus === 'APPROVED') this.status = 'payment-pending';
-    else this.status = 'pending';
+    else if (this.bookingStatus === 'EXPIRED') this.status = 'expired';
+    else if (this.bookingStatus === 'PAYMENT_PENDING') this.status = this.reviewStatus === 'APPROVED' ? 'payment-pending' : 'pending';
+    else if (this.bookingStatus === 'APPROVED') this.status = 'approved';
+    else if (this.bookingStatus === 'UNDER_REVIEW') this.status = 'under-review';
+    else this.status = 'requested';
   }
 });
 

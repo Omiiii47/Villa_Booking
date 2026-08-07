@@ -19,3 +19,8 @@ export const getVillaById = async (id) => {
   const { data } = await api.get(`/villas/${id}`);
   return data;
 };
+
+export const getVillaAvailability = async (id, days = 60) => {
+  const { data } = await api.get(`/villas/${id}/availability`, { params: { days } });
+  return data;
+};

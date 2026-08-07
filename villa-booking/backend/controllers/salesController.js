@@ -6,6 +6,7 @@ const Notification = require('../models/Notification');
 const { addHistory, notifyAllSales } = require('../utils/bookingHistory');
 const { notify } = require('../utils/notify');
 const razorpay = require('../utils/razorpay');
+const { holdExpiryFor, PAYMENT_HOLD_MINUTES } = require('../config/payment');
 
 const nightsBetween = (checkIn, checkOut) => {
   const a = new Date(checkIn);
@@ -101,12 +102,16 @@ const listBookings = async (req, res) => {
 
     if (status) {
       const legacyMap = {
-        pending: ['PAYMENT_PENDING'],
+        pending: ['REQUESTED', 'UNDER_REVIEW', 'APPROVED', 'PAYMENT_PENDING'],
         'pending-custom': ['PAYMENT_PENDING'],
         'payment-pending': ['PAYMENT_PENDING'],
         confirmed: ['CONFIRMED'],
         cancelled: ['CANCELLED'],
+        expired: ['EXPIRED'],
         completed: ['COMPLETED'],
+        requested: ['REQUESTED'],
+        'under-review': ['UNDER_REVIEW'],
+        approved: ['APPROVED'],
         rejected: ['REJECTED'],
       };
       const mapped = legacyMap[status];
@@ -167,6 +172,9 @@ const getBooking = async (req, res) => {
         note: `${req.admin.name} opened this booking.`,
         at: new Date(),
       });
+      if (booking.bookingStatus === 'REQUESTED') {
+        booking.bookingStatus = 'UNDER_REVIEW';
+      }
       await booking.save();
     }
 
@@ -181,6 +189,10 @@ const updateBooking = async (req, res) => {
     const booking = await Booking.findById(req.params.id);
     if (!booking) {
       return res.status(404).json({ message: 'Booking not found' });
+    }
+
+    if (booking.bookingStatus === 'REQUESTED') {
+      booking.bookingStatus = 'UNDER_REVIEW';
     }
 
     if (req.body.villa) {
@@ -259,7 +271,7 @@ const approveBooking = async (req, res) => {
     applyQuotation(booking, pricing);
 
     booking.reviewStatus = 'APPROVED';
-    booking.bookingStatus = 'PAYMENT_PENDING';
+    booking.bookingStatus = 'APPROVED';
     booking.requiresManualReview = false;
     booking.approvedBy = req.admin._id;
     booking.approvedAt = new Date();
@@ -273,6 +285,9 @@ const approveBooking = async (req, res) => {
     if (explicitLink) {
       booking.paymentLink = explicitLink;
       booking.paymentStatus = 'PENDING';
+      booking.bookingStatus = 'PAYMENT_PENDING';
+      booking.paymentHoldStartedAt = new Date();
+      booking.paymentHoldExpiresAt = holdExpiryFor();
     } else {
       if (razorpay.setupError()) {
         return res.status(400).json({ message: `A payment link is required to approve — ${razorpay.setupError()}` });
@@ -299,6 +314,9 @@ const approveBooking = async (req, res) => {
       booking.paymentLinkId = link.id;
       booking.paymentLinkExpiresAt = expiresAt;
       booking.paymentStatus = 'LINK_SENT';
+      booking.bookingStatus = 'PAYMENT_PENDING';
+      booking.paymentHoldStartedAt = new Date();
+      booking.paymentHoldExpiresAt = holdExpiryFor();
       booking.paymentHistory.push({
         linkId: link.id,
         url: link.short_url,
@@ -408,6 +426,10 @@ const confirmPayment = async (req, res) => {
     booking.paymentStatus = 'PAID';
     if (req.body.paymentId) booking.paymentId = req.body.paymentId;
     booking.paymentLink = '';
+    booking.paymentLinkId = '';
+    booking.paymentLinkExpiresAt = null;
+    booking.paymentHoldExpiresAt = null;
+    if (req.body.paymentId) booking.paymentProcessedId = String(req.body.paymentId);
 
     addHistory(booking, {
       actor: req.admin.name,
@@ -418,6 +440,46 @@ const confirmPayment = async (req, res) => {
     });
 
     await booking.save();
+
+    // First-payment-wins: cancel overlapping PAYMENT_PENDING bookings so no
+    // other customer can double-book these dates.
+    const existingWinner = await Booking.findOne({
+      _id: { $ne: booking._id },
+      villa: booking.villa,
+      bookingStatus: { $in: ['CONFIRMED', 'COMPLETED'] },
+      $or: [{ checkIn: { $lt: booking.checkOut }, checkOut: { $gt: booking.checkIn } }],
+    });
+    if (existingWinner) {
+      return res.status(409).json({ message: 'Another booking already secured these dates.' });
+    }
+    const losers = await Booking.find({
+      _id: { $ne: booking._id },
+      villa: booking.villa,
+      bookingStatus: 'PAYMENT_PENDING',
+      $or: [{ checkIn: { $lt: booking.checkOut }, checkOut: { $gt: booking.checkIn } }],
+    });
+    for (const b of losers) {
+      b.bookingStatus = 'CANCELLED';
+      b.cancelledBy = 'system';
+      b.cancelledAt = new Date();
+      b.cancellationReason = 'Another customer completed payment for this villa first.';
+      addHistory(b, {
+        actor: 'System',
+        actorType: 'system',
+        action: 'First payment wins',
+        note: 'Cancelled because another booking for the same dates was paid first.',
+        changes: { bookingStatus: 'CANCELLED' },
+      });
+      await b.save();
+      await notify({
+        recipientType: 'user',
+        recipient: b.user,
+        type: 'booking_lost_to_payment',
+        reference: b._id,
+        title: 'Dates no longer available',
+        message: 'Someone completed payment for this villa first, so we could not hold your dates.',
+      });
+    }
 
     await notify({
       recipientType: 'user',
@@ -565,6 +627,9 @@ const createPaymentLink = async (req, res) => {
     booking.paymentLinkId = link.id;
     booking.paymentLinkExpiresAt = expiresAt;
     booking.paymentStatus = 'LINK_SENT';
+    booking.bookingStatus = 'PAYMENT_PENDING';
+    booking.paymentHoldStartedAt = new Date();
+    booking.paymentHoldExpiresAt = holdExpiryFor();
     booking.paymentHistory.push({
       linkId: link.id,
       url: link.short_url,
@@ -665,8 +730,13 @@ const clearPaymentLink = async (req, res) => {
     booking.paymentLink = '';
     booking.paymentLinkId = '';
     booking.paymentLinkExpiresAt = null;
+    booking.paymentHoldStartedAt = null;
+    booking.paymentHoldExpiresAt = null;
     if (booking.paymentStatus === 'LINK_SENT' || booking.paymentStatus === 'LINK_EXPIRED') {
       booking.paymentStatus = 'UNPAID';
+    }
+    if (booking.bookingStatus === 'PAYMENT_PENDING') {
+      booking.bookingStatus = 'APPROVED';
     }
     addHistory(booking, {
       actor: req.admin.name,
@@ -745,7 +815,7 @@ const createCustomBooking = async (req, res) => {
       pets: petsCount,
       guests: guestCount,
       reviewStatus: 'PENDING',
-      bookingStatus: 'PAYMENT_PENDING',
+      bookingStatus: 'REQUESTED',
       paymentStatus: 'UNPAID',
       history: [
         {
@@ -839,11 +909,11 @@ const getDashboardStats = async (req, res) => {
       else reviewMap.PENDING += r.count;
     });
 
-    const bookingMap = { PAYMENT_PENDING: 0, CONFIRMED: 0, CANCELLED: 0, COMPLETED: 0 };
+    const bookingMap = { REQUESTED: 0, UNDER_REVIEW: 0, APPROVED: 0, PAYMENT_PENDING: 0, CONFIRMED: 0, CANCELLED: 0, EXPIRED: 0, COMPLETED: 0 };
     byBookingR.forEach((b) => {
-      const key = b._id || 'PAYMENT_PENDING';
+      const key = b._id || 'REQUESTED';
       if (bookingMap[key] !== undefined) bookingMap[key] = b.count;
-      else bookingMap.PAYMENT_PENDING += b.count;
+      else bookingMap.REQUESTED += b.count;
     });
 
     const revenueValue = revenueAgg.length ? revenueAgg[0].total : 0;
@@ -860,10 +930,14 @@ const getDashboardStats = async (req, res) => {
         rejected: reviewMap.REJECTED,
       },
       bookings: {
+        requested: bookingMap.REQUESTED,
+        underReview: bookingMap.UNDER_REVIEW,
+        approved: bookingMap.APPROVED,
         paymentPending: bookingMap.PAYMENT_PENDING,
         confirmed: bookingMap.CONFIRMED,
-        completed: bookingMap.COMPLETED,
         cancelled: bookingMap.CANCELLED,
+        expired: bookingMap.EXPIRED,
+        completed: bookingMap.COMPLETED,
       },
       awaitingPayment: awaitingPaymentCount,
       revenue: revenueValue || 0,

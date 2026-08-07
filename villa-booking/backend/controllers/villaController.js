@@ -1,5 +1,6 @@
 const Villa = require('../models/Villa');
 const cloudinary = require('../utils/cloudinary');
+const { buildAvailability } = require('../utils/availability');
 
 const getVillas = async (req, res) => {
   try {
@@ -145,6 +146,30 @@ const getFeaturedVillas = async (req, res) => {
   }
 };
 
+const getAvailability = async (req, res) => {
+  try {
+    const villa = await Villa.findById(req.params.id);
+    if (!villa) {
+      return res.status(404).json({ message: 'Villa not found' });
+    }
+    const days = Math.min(Number(req.query.days) || 60, 365);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const from = today;
+    const to = new Date(today.getTime() + (days - 1) * 24 * 60 * 60 * 1000);
+    const { state, dayKeys } = await buildAvailability({ villa, from, to });
+    res.json({
+      villa: villa._id,
+      start: from.toISOString(),
+      days,
+      availability: state,
+      dayKeys,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
   getVillas,
   getVillaBySlug,
@@ -154,4 +179,5 @@ module.exports = {
   deleteVilla,
   uploadImages,
   getFeaturedVillas,
+  getAvailability,
 };

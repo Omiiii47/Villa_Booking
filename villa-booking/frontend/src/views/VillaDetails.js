@@ -8,6 +8,7 @@ import { getVillaBySlug } from '../services/villaService';
 import { getVillaReviews } from '../services/reviewService';
 import { useUserAuth } from '../context/UserAuthContext';
 import { useWishlist } from '../context/WishlistContext';
+import AvailabilityCalendar from '../components/AvailabilityCalendar';
 import Magnetic from '../components/Magnetic';
 
 const VillaDetails = () => {
@@ -212,30 +213,19 @@ fetch();
                     <span className="text-gray-400"> / night</span>
                   </div>
                   {user ? (
-                    <form className="space-y-4">
-                      <div className="grid grid-cols-2 gap-3">
-                        <div>
-                          <label className="text-xs text-gray-400 block mb-1">Check-In</label>
-                          <input type="date" min={new Date().toISOString().split('T')[0]} required
-                            value={dates.checkIn}
-                            onChange={(e) => setDates({ ...dates, checkIn: e.target.value })}
-                            className="input-field !py-2 text-xs" />
-                        </div>
-                        <div>
-                          <label className="text-xs text-gray-400 block mb-1">Check-Out</label>
-                          <input type="date" min={dates.checkIn || new Date().toISOString().split('T')[0]} required
-                            value={dates.checkOut}
-                            onChange={(e) => setDates({ ...dates, checkOut: e.target.value })}
-                            className="input-field !py-2 text-xs" />
-                        </div>
-                      </div>
+                    <div className="space-y-4">
+                      <AvailabilityCalendar
+                        villaId={villa._id}
+                        value={dates}
+                        onChange={(v) => setDates(v)}
+                      />
                       <Magnetic>
                         <Link href={`/booking?slug=${villa.slug}&checkIn=${dates.checkIn}&checkOut=${dates.checkOut}`}
-                          className="btn-primary w-full text-center block text-[10px]">
+                          className={`btn-primary w-full text-center block text-[10px] ${dates.checkIn && dates.checkOut ? '' : 'opacity-50 pointer-events-none'}`}>
                           <span>Book Now</span>
                         </Link>
                       </Magnetic>
-                    </form>
+                    </div>
                   ) : (
                     <Magnetic>
                       <Link href={`/login?redirect=/villas/${villa.slug}?book=1`}

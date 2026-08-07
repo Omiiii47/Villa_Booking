@@ -26,9 +26,13 @@ const reviewBadge = {
 };
 
 const bookingBadge = {
+  REQUESTED: 'bg-sky-100 text-sky-700',
+  UNDER_REVIEW: 'bg-indigo-100 text-indigo-700',
+  APPROVED: 'bg-teal-100 text-teal-700',
   PAYMENT_PENDING: 'bg-blue-100 text-blue-700',
   CONFIRMED: 'bg-emerald-100 text-emerald-700',
   CANCELLED: 'bg-gray-300 text-gray-700',
+  EXPIRED: 'bg-orange-100 text-orange-700',
   COMPLETED: 'bg-violet-100 text-violet-700',
 };
 
@@ -111,7 +115,7 @@ const SalesBookingReview = ({ booking, villas, onClose, onSaved }) => {
   useEffect(() => lockBodyScroll(), []);
 
   const reviewStatus = booking.reviewStatus || 'PENDING';
-  const bookingStatus = booking.bookingStatus || 'PAYMENT_PENDING';
+  const bookingStatus = booking.bookingStatus || 'REQUESTED';
   const nights = f.checkIn && f.checkOut ? Math.max(1, Math.ceil((new Date(f.checkOut) - new Date(f.checkIn)) / (1000 * 60 * 60 * 24))) : booking.nights || 1;
   const overCapacity = (booking.extraGuests || 0) > 0;
   const set = (key) => (e) => setF({ ...f, [key]: e.target.value });

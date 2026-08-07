@@ -19,9 +19,13 @@ const reviewStyles = {
 };
 
 const bookingStyles = {
+  REQUESTED: 'bg-sky-100 text-sky-700',
+  UNDER_REVIEW: 'bg-indigo-100 text-indigo-700',
+  APPROVED: 'bg-teal-100 text-teal-700',
   PAYMENT_PENDING: 'bg-blue-100 text-blue-700',
   CONFIRMED: 'bg-emerald-100 text-emerald-700',
   CANCELLED: 'bg-gray-300 text-gray-700',
+  EXPIRED: 'bg-orange-100 text-orange-700',
   COMPLETED: 'bg-violet-100 text-violet-700',
 };
 
@@ -34,10 +38,14 @@ const reviewFilters = [
 
 const bookingFilters = [
   { id: '', label: 'All Lifecycle' },
+  { id: 'REQUESTED', label: 'Requested' },
+  { id: 'UNDER_REVIEW', label: 'Under Review' },
+  { id: 'APPROVED', label: 'Approved' },
   { id: 'PAYMENT_PENDING', label: 'Payment Pending' },
   { id: 'CONFIRMED', label: 'Confirmed' },
-  { id: 'COMPLETED', label: 'Completed' },
   { id: 'CANCELLED', label: 'Cancelled' },
+  { id: 'EXPIRED', label: 'Expired' },
+  { id: 'COMPLETED', label: 'Completed' },
 ];
 
 const fmtMoney = (v) => `$${Number(v || 0).toLocaleString()}`;

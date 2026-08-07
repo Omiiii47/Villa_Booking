@@ -26,6 +26,7 @@ const villaSchema = mongoose.Schema(
     order: { type: Number, default: 0 },
     showBookNow: { type: Boolean, default: true },
     showExploreVilla: { type: Boolean, default: true },
+    blockedDates: [{ type: Date }],
   },
   { timestamps: true }
 );

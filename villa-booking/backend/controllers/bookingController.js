@@ -2,6 +2,8 @@ const Booking = require('../models/Booking');
 const Villa = require('../models/Villa');
 const { addHistory, notifyAllSales } = require('../utils/bookingHistory');
 const { notify } = require('../utils/notify');
+const { buildAvailability, dateKey } = require('../utils/availability');
+const { holdExpiryFor } = require('../config/payment');
 
 const createBooking = async (req, res) => {
   try {
@@ -43,16 +45,28 @@ const createBooking = async (req, res) => {
     const isOverCapacity = guestCount > villa.capacity;
     const extraGuests = isOverCapacity ? guestCount - villa.capacity : 0;
 
-    const overlapping = await Booking.findOne({
-      villa: villaId,
-      bookingStatus: { $in: ['PAYMENT_PENDING', 'CONFIRMED'] },
-      $or: [
-        { checkIn: { $lt: checkOutDate }, checkOut: { $gt: checkInDate } },
-      ],
-    });
-
-    if (overlapping) {
-      return res.status(400).json({ message: 'Villa is not available for these dates' });
+    // Only dates that are not already booked/blocked and not under an active
+    // payment hold are selectable. REQUESTED/UNDER_REVIEW/APPROVED bookings do
+    // NOT hold dates, so they never block whoever pays first.
+    const days = Math.ceil((checkOutDate - checkInDate) / (1000 * 60 * 60 * 24));
+    const from = checkInDate;
+    const to = checkOutDate;
+    const { state } = await buildAvailability({ villa, from, to });
+    let firstBusy = null;
+    for (let i = 0; i < days; i++) {
+      const d = new Date(from.getTime() + i * 24 * 60 * 60 * 1000);
+      const s = state[dateKey(d)];
+      if (s === 'BOOKED' || s === 'BLOCKED' || s === 'PAYMENT_PENDING') {
+        firstBusy = { date: dateKey(d), state: s };
+        break;
+      }
+    }
+    if (firstBusy) {
+      const reason =
+        firstBusy.state === 'PAYMENT_PENDING'
+          ? 'These dates are currently under a pending payment for another customer. Availability is not guaranteed.'
+          : 'This villa is not available for these dates.';
+      return res.status(400).json({ message: reason });
     }
 
     const booking = await Booking.create({
@@ -76,7 +90,7 @@ const createBooking = async (req, res) => {
       arrivalTime,
       specialRequests,
       reviewStatus: 'PENDING',
-      bookingStatus: 'PAYMENT_PENDING',
+      bookingStatus: 'REQUESTED',
       paymentStatus: 'UNPAID',
       isCustomBooking: isOverCapacity,
       requiresManualReview: isOverCapacity,
@@ -173,7 +187,9 @@ const cancelBooking = async (req, res) => {
       return res.status(403).json({ message: 'Not authorized' });
     }
 
-    if (booking.bookingStatus !== 'PAYMENT_PENDING' && booking.bookingStatus !== 'CONFIRMED') {
+    if (['REQUESTED', 'UNDER_REVIEW', 'APPROVED', 'PAYMENT_PENDING', 'CONFIRMED'].includes(booking.bookingStatus) && booking.bookingStatus !== 'COMPLETED') {
+      // allowed — fall through
+    } else {
       return res.status(400).json({
         message: 'This booking can no longer be cancelled.',
       });
@@ -183,6 +199,9 @@ const cancelBooking = async (req, res) => {
     booking.cancelledBy = 'customer';
     booking.cancelledAt = new Date();
     booking.cancellationReason = req.body.reason || 'Customer cancelled the booking';
+    booking.paymentHoldStartedAt = null;
+    booking.paymentHoldExpiresAt = null;
+    if (booking.paymentStatus === 'PAID') booking.paymentStatus = 'REFUNDED';
     addHistory(booking, {
       actor: req.user.name,
       actorType: 'user',

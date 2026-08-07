@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { FaCalendar, FaUsers, FaCommentDots, FaCheck, FaLock, FaUser, FaChild, FaBaby, FaPaw, FaPhone, FaGlobe, FaBriefcase, FaClock } from 'react-icons/fa';
 import { getVillaBySlug } from '../services/villaService';
 import { createBooking } from '../services/bookingService';
+import AvailabilityCalendar from '../components/AvailabilityCalendar';
 import Magnetic from '../components/Magnetic';
 
 const Booking = () => {
@@ -73,14 +74,15 @@ const Booking = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
           <div className="lg:col-span-2">
             <form onSubmit={handleSubmit} className="space-y-7">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                {[{ label: 'Check-In Date', icon: FaCalendar, key: 'checkIn' }, { label: 'Check-Out Date', icon: FaCalendar, key: 'checkOut' }].map((f) => (
-                  <div key={f.key}>
-                    <label className="flex items-center gap-2 text-sm font-medium mb-2"><f.icon className="text-luxury-accent" /> {f.label}</label>
-                    <input type="date" value={form[f.key]} onChange={(e) => setForm({ ...form, [f.key]: e.target.value })}
-                      min={f.key === 'checkOut' && form.checkIn ? form.checkIn : new Date().toISOString().split('T')[0]} required className="input-field rounded-2xl" />
-                  </div>
-                ))}
+<div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div className="md:col-span-2">
+                  <label className="flex items-center gap-2 text-sm font-medium mb-2"><FaCalendar className="text-luxury-accent" /> Select Travel Dates</label>
+                  <AvailabilityCalendar
+                    villaId={villa._id}
+                    value={{ checkIn: form.checkIn, checkOut: form.checkOut }}
+                    onChange={(v) => setForm((f) => ({ ...f, checkIn: v.checkIn, checkOut: v.checkOut }))}
+                  />
+                </div>
               </div>
               <div>
                 <label className="flex items-center gap-2 text-sm font-medium mb-3"><FaUsers className="text-luxury-accent" /> Guests</label>

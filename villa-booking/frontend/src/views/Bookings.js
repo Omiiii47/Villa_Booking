@@ -19,16 +19,24 @@ const reviewLabels = {
 };
 
 const bookingColors = {
+  REQUESTED: 'bg-sky-100 text-sky-700',
+  UNDER_REVIEW: 'bg-indigo-100 text-indigo-700',
+  APPROVED: 'bg-teal-100 text-teal-700',
   PAYMENT_PENDING: 'bg-blue-100 text-blue-700',
   CONFIRMED: 'bg-emerald-100 text-emerald-700',
   CANCELLED: 'bg-gray-300 text-gray-700',
+  EXPIRED: 'bg-orange-100 text-orange-700',
   COMPLETED: 'bg-violet-100 text-violet-700',
 };
 
 const bookingLabels = {
-  PAYMENT_PENDING: 'Awaiting Payment',
+  REQUESTED: 'Request Submitted',
+  UNDER_REVIEW: 'Under Review',
+  APPROVED: 'Approved',
+  PAYMENT_PENDING: 'Payment Awaiting',
   CONFIRMED: 'Confirmed',
   CANCELLED: 'Cancelled',
+  EXPIRED: 'Expired',
   COMPLETED: 'Completed',
 };
 
@@ -42,7 +50,7 @@ const paymentLabels = {
   REFUNDED: 'Refunded',
 };
 
-const cancellable = (b) => (b.bookingStatus === 'PAYMENT_PENDING' || b.bookingStatus === 'CONFIRMED');
+const cancellable = (b) => ['PAYMENT_PENDING', 'CONFIRMED', 'APPROVED'].includes(b.bookingStatus);
 
 const formatExpiry = (date, now) => {
   const diff = new Date(date).getTime() - now;
@@ -200,7 +208,7 @@ const BookingsPage = () => {
           <div className="space-y-6">
             {bookings.map((booking, i) => {
               const review = booking.reviewStatus || 'PENDING';
-              const bstatus = booking.bookingStatus || 'PAYMENT_PENDING';
+              const bstatus = booking.bookingStatus || 'REQUESTED';
               const pstatus = booking.paymentStatus || 'UNPAID';
               return (
                 <motion.div
@@ -233,7 +241,12 @@ const BookingsPage = () => {
                           <p className="font-display text-xl mt-3">
                             ${(booking.finalPrice ?? booking.quotedPrice ?? booking.customPricing?.totalAmount ?? booking.totalPrice)?.toLocaleString()}
                           </p>
-                          {review === 'APPROVED' && (bstatus === 'PAYMENT_PENDING' || bstatus === 'CONFIRMED') && <PaymentCTA booking={booking} onUpdated={refreshBookings} />}
+                          {bstatus === 'PAYMENT_PENDING' && <PaymentCTA booking={booking} onUpdated={refreshBookings} />}
+                          {bstatus === 'EXPIRED' && (
+                            <p className="mt-3 max-w-sm text-xs text-orange-700 bg-orange-50 border border-orange-200 rounded-xl p-3">
+                              Payment was not completed, so these dates were released. You have not been charged. Please rebook if you still wish to stay.
+                            </p>
+                          )}
                           {booking.isCustomBooking && (
                             <div className="mt-3 max-w-sm p-3 rounded-xl bg-orange-50 border border-orange-200">
                               <p className="text-sm text-orange-800 font-medium mb-1">Custom booking request</p>
