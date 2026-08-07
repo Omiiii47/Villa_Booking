@@ -1,23 +1,40 @@
 ﻿'use client'
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { FaUser, FaCalendarAlt, FaHeart, FaSignOutAlt, FaShieldAlt, FaClock, FaEnvelope } from 'react-icons/fa';
+import { FaUser, FaCalendarAlt, FaHeart, FaSignOutAlt, FaShieldAlt, FaClock, FaEnvelope, FaBell } from 'react-icons/fa';
 import { useUserAuth } from '../context/UserAuthContext';
 import { useWishlist } from '../context/WishlistContext';
+import { getNotifications, markNotificationsRead } from '../services/bookingService';
 
 const Dashboard = () => {
   const { user, logout } = useUserAuth();
   const { wishlist, fetchWishlist } = useWishlist();
+  const [notifications, setNotifications] = useState([]);
 
   useEffect(() => { if (user) fetchWishlist(); }, [user, fetchWishlist]);
+
+  useEffect(() => {
+    if (!user) return;
+    getNotifications().then(setNotifications).catch(() => setNotifications([]));
+  }, [user]);
+
   if (!user) return null;
+
+  const unread = notifications.filter((n) => !n.read).length;
 
   const tabs = [
     { href: '/dashboard', label: 'Profile', icon: FaUser, active: true },
     { href: '/bookings', label: 'My Bookings', icon: FaCalendarAlt },
     { href: '/wishlist', label: 'Wishlist', icon: FaHeart, count: wishlist.length },
   ];
+
+  const handleMarkAllRead = async () => {
+    try {
+      await markNotificationsRead();
+      setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+    } catch { /* noop */ }
+  };
 
   return (
     <section className="pt-36 pb-24 bg-white min-h-screen">
@@ -62,10 +79,38 @@ const Dashboard = () => {
                       <div className="w-8 h-8 rounded-xl bg-luxury-accent/20 flex items-center justify-center"><item.icon className="text-luxury-accent text-sm" /></div>
                       <span className="text-xs uppercase tracking-widest text-gray-500">{item.label}</span>
                     </div>
-                    <p className="font-body text-luxury-black">{item.value}</p>
+<p className="font-body text-luxury-black">{item.value}</p>
                   </motion.div>
                 ))}
               </div>
+            </div>
+
+            <div className="bg-white rounded-3xl shadow-sm border border-gray-50 p-8 mt-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="font-display text-2xl flex items-center gap-3">
+                  <FaBell className="text-luxury-accent" /> Notifications
+                  {unread > 0 && <span className="text-xs font-medium bg-red-500 text-white px-2 py-0.5 rounded-full">{unread} new</span>}
+                </h2>
+                {notifications.length > 0 && unread > 0 && (
+                  <button onClick={handleMarkAllRead} className="text-xs text-luxury-accent hover:underline">Mark all as read</button>
+                )}
+              </div>
+              {notifications.length === 0 ? (
+                <p className="text-gray-400 text-sm">No notifications yet. We&apos;ll keep you posted on your bookings.</p>
+              ) : (
+                <ul className="space-y-3">
+                  {notifications.map((n) => (
+                    <li key={n._id} className={`flex items-start gap-3 rounded-2xl p-4 ${n.read ? 'bg-luxury-cream/60' : 'bg-blue-50 border border-blue-100'}`}>
+                      <div className={`mt-1 w-2 h-2 rounded-full shrink-0 ${n.read ? 'bg-gray-300' : 'bg-luxury-accent'}`} />
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium">{n.title}</p>
+                        {n.message && <p className="text-sm text-gray-500 mt-0.5">{n.message}</p>}
+                        <p className="text-xs text-gray-400 mt-1">{new Date(n.createdAt).toLocaleString()}</p>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
           </motion.div>
         </div>

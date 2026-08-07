@@ -24,9 +24,9 @@ const Booking = () => {
     fetch();
   }, [slug, router]);
 
+  const capacity = villa?.capacity || 10;
   const nights = () => { if (!form.checkIn || !form.checkOut) return 0; return Math.max(0, Math.ceil((new Date(form.checkOut) - new Date(form.checkIn)) / (1000 * 60 * 60 * 24))); };
   const total = () => villa ? nights() * villa.pricePerNight : 0;
-  const capacity = villa?.capacity || 10;
   const adultsCount = Number(form.adults) || 1;
   const kidsCount = Number(form.kids) || 0;
   const infantsCount = Number(form.infants) || 0;
@@ -148,7 +148,7 @@ const Booking = () => {
               <Magnetic>
                 <button type="submit" disabled={submitting || !form.checkIn || !form.checkOut}
                   className="btn-primary w-full disabled:opacity-50 text-[10px]">
-                  <span>{submitting ? 'Processing...' : isOverCapacity ? 'Submit Booking Request' : `Request Booking — $${total().toLocaleString()}`}</span>
+                  <span>{submitting ? 'Processing...' : 'Submit Booking Request (Free)'}</span>
                 </button>
               </Magnetic>
               <div className="flex items-center gap-4 text-gray-400 text-xs"><FaLock /> Secure checkout Â· Free cancellation within 48h</div>
@@ -159,7 +159,7 @@ const Booking = () => {
               <div className="card-premium p-8">
                 <div className="flex gap-4 mb-6">
                   <img src={villa?.images?.[0]} alt={villa?.name} className="w-20 h-20 rounded-2xl object-cover" />
-                  <div><h3 className="font-display text-lg">{villa?.name}</h3><p className="text-gray-400 text-sm">{villa?.location}</p></div>
+<div><h3 className="font-display text-lg">{villa?.name}</h3><p className="text-gray-400 text-sm">{villa?.location}</p></div>
                 </div>
                 <div className="space-y-3 mb-6 pb-6 border-b border-gray-100">
                   {[{ label: `$${villa?.pricePerNight} x ${nights()} nights`, value: `$${(villa?.pricePerNight || 0) * nights()}` },
@@ -168,13 +168,17 @@ const Booking = () => {
                   ].map((item) => (
                     <div key={item.label} className="flex justify-between text-sm"><span className="text-gray-500">{item.label}</span><span>{item.value}</span></div>
                   ))}
+                  <div className="flex justify-between font-display text-lg pt-2"><span>Estimated total</span><span className="text-luxury-accent">${(total() + Math.round(total() * 0.18)).toLocaleString()}</span></div>
                   {isOverCapacity && (
                     <p className="text-xs text-orange-600 bg-orange-50 border border-orange-200 rounded-xl p-3">
-                      Estimate only. Final nightly rate and charges will be confirmed by our Sales Team in your personalized offer.
+                      Your group size ({totalGuests} guests) exceeds the {capacity}-guest capacity. Final nightly rate and charges will be confirmed by our Sales Team in your personalized offer.
                     </p>
                   )}
+                  <p className="text-xs text-gray-500 bg-gray-50 border border-gray-200 rounded-xl p-3">
+                    Estimate only. Submitting this request is <span className="font-medium text-luxury-accent">free</span> — final pricing will be confirmed by our Sales Team in your personalized offer.
+                  </p>
                 </div>
-                <div className="flex justify-between font-display text-xl"><span>Total</span><span className="text-luxury-accent">${(total() + Math.round(total() * 0.18)).toLocaleString()}</span></div>
+                <div className="flex justify-between font-display text-xl"><span>Total due now</span><span className="text-luxury-accent">$0</span></div>
               </div>
             </motion.div>
           </div>

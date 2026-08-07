@@ -20,6 +20,7 @@ There is **no root tooling**: no root `package.json`/lockfile, README, or CI (ro
 ## Config / secrets
 
 - `villa-booking/backend/.env` exists locally but is **gitignored / not committed**; it holds the real Atlas `MONGO_URI`, `JWT_SECRET`, `JWT_EXPIRE`. Keep existing values as-is and do not introduce new secrets. Cloudinary values are stubbed placeholders.
+- Payments: `RAZORPAY_KEY_ID` / `RAZORPAY_KEY_SECRET` / `RAZORPAY_WEBHOOK_SECRET` (names in `.env.example`). Razorpay is **Test-Mode only** — `utils/razorpay.js` `isTestMode()` requires the key to start `rzp_test_` and is the only gate against real charges. If unset or live keys are present, payment-link features fail cleanly (400 on approve / 503 on webhook) with `setupError()`. Do not "fix" this by allowing live keys.
 - Image uploads (villa images AND Landing CMS images) go through `multer` **memory** storage → Cloudinary (`utils/cloudinary.js`), and return a clear 500 error if `CLOUDINARY_*` env vars are unset/stubbed (they are stubs in local `.env`). The disk-storage `middleware/upload.js` and the statically-served `backend/uploads/` dir are **dead/unused** — do not route new uploads through them.
 
 ## Auth: fully separate user / admin / sales systems
@@ -27,17 +28,30 @@ There is **no root tooling**: no root `package.json`/lockfile, README, or CI (ro
 - Three independent auth systems share **nothing**: separate models (`User`, `Admin`), guards (`middleware/userAuth.js` → `userProtect`, `middleware/adminAuth.js` → `adminProtect` + `salesProtect`), controllers, routes, and frontend sessions. There is no `role` field on `User` anymore.
 - **`Admin` model has a `role` field** (`'admin'` | `'sales'`, default `'admin'`). JWT payload carries `{ id, type: 'admin', role }`. `adminProtect` requires `role === 'admin'`; `salesProtect` requires `role === 'sales'`. Both load/reload the admin doc and check the role server-side (a sales member cannot hit `/api/admin/*` and an admin cannot hit `/api/sales/*`; a `user` token hits neither).
 - JWTs carry a `type` claim (`'user'`/`'admin'`); each guard verifies the token and looks up the doc in its own model, so a user token can never authenticate an admin endpoint and vice versa. All sign with the same `JWT_SECRET`/`JWT_EXPIRE` — do not add new secrets. Guards attach `req.user` (User) or `req.admin` (Admin); controllers must read the right one.
-- User endpoints: `/api/auth/*` (register/login/profile/wishlist) + user-protected `/api/bookings` (own bookings only, internal notes stripped via `select('-internalNotes')`) + `/api/reviews` (create, delete own).
+- User endpoints: `/api/auth/*` (register/login/profile/wishlist) + user-protected `/api/bookings` (own bookings only, `internalNotes`/`history` stripped via `select('-internalNotes -history')`) + `/api/notifications` + `/api/reviews` (create, delete own).
 - Admin endpoints: `/api/admin-auth/*` (login/me — returns `role`) + `/api/admin/*` (CMS only, Sales Team management, review delete — **no booking routes**) + admin-only `/api/users` (user management) + villa write routes (`POST/PUT/DELETE /api/villas`, `/upload-images`).
-- Sales endpoints: `/api/sales/*` (all booking management — list/get/update/review/custom-create), guarded by `salesProtect`.
+- Sales endpoints: `/api/sales/*` (all booking management — list/get/update/approve/reject/confirm-payment/cancel/complete/custom-create + payment-link + notifications), guarded by `salesProtect`.
 
 ## Booking ownership & workflow
 
 - **Booking management belongs ONLY to the Sales Team** (`/sales` dashboard, `/api/sales/*`). The Admin dashboard has **no** bookings tab, no "Custom Review Pending", no booking review. The Admin only does CMS/Villas/Users/Sales Team.
-- Customer submits a booking request via user-protected `POST /api/bookings` → saved to MongoDB with `status: 'pending'` → immediately visible in `/sales`.
-- Guest composition stored as `adults`/`kids`/`infants`/`pets`; `guests` = adults + kids + infants. Over-capacity (guests > `villa.capacity`) is **never rejected** — it is flagged `requiresManualReview: true`, `isCustomBooking: true`, plus `standardCapacity`/`requestedGuests`/`extraGuests`, and shows a "⚠ Over Capacity" badge in `/sales`. Status stays `pending` until sales decides.
-- Sales Team actions (in `SalesBookingReview` modal): approve (`confirmed`), reject (`rejected`), edit dates/villa/guest count, custom pricing (base, extra-guest fee, cleaning, additional services, housekeeping, bedding, security, transportation, chef, decoration, airport pickup, discount, complimentary services, override total), internal notes (never exposed to the customer), offer message, and "Send Offer" (`offerSent`). They can also **create custom bookings** from scratch.
-- Booking statuses: `pending`, `pending-custom` (legacy), `confirmed`, `rejected`, `cancelled` (customer cancel), `completed`. `internalNotes` is sales-only; customer-facing responses strip it.
+- Customer submits a booking request via user-protected `POST /api/bookings` → saved to MongoDB with `reviewStatus: 'PENDING'`, `bookingStatus: 'PAYMENT_PENDING'`, `paymentStatus: 'UNPAID'` → immediately visible in `/sales`.
+- Guest composition stored as `adults`/`kids`/`infants`/`pets`; `guests` = adults + kids + infants. Over-capacity (guests > `villa.capacity`) is **never rejected** — it is flagged `requiresManualReview: true`, `isCustomBooking: true`, plus `standardCapacity`/`requestedGuests`/`extraGuests`, and shows a "⚠ Over Capacity" badge in `/sales`. `reviewStatus` stays `PENDING` until sales decides.
+- Booking statuses are now **three independent axes** in `models/Booking.js` (a legacy `status` field is still derived by a pre-save hook for backward compat — new code should read the three axes):
+  - `reviewStatus` — `PENDING` | `APPROVED` | `REJECTED`. Controlled only by Sales.
+  - `bookingStatus` — `PAYMENT_PENDING` | `CONFIRMED` | `CANCELLED` | `COMPLETED`.
+  - `paymentStatus` — `UNPAID` | `PENDING` | `LINK_SENT` | `LINK_EXPIRED` | `PAID` | `FAILED` | `REFUNDED`.
+  - Review and booking are **never mixed**: a rejection is a reviewStatus, cancellation/completion are bookingStatus, payment is paymentStatus.
+- Sales Team actions (in `SalesBookingReview` modal): approve (→ `reviewStatus: APPROVED`, `bookingStatus: PAYMENT_PENDING`, **auto-creates a Razorpay payment link** unless an explicit link is pasted), reject (requires reason), edit dates/villa/guests, confirm payment (`confirm-payment` → CONFIRMED + PAID), cancel, complete, custom pricing (base, extra-guest fee, cleaning, additional services, housekeeping, bedding, security, transportation, chef, decoration, airport pickup, discount, complimentary services, override total), internal notes (never exposed), offer message, "Send Offer", payment link generate/clear. They can also **create custom bookings** from scratch (`POST /api/sales/bookings`).
+- `internalNotes` **and** the `history` array are sales-only; customer-facing responses select them out (`.select('-internalNotes -history')`).
+
+## Payments (Razorpay payment links) & Notifications
+
+- Payments use Razorpay **Payment Links** (not the Checkout SDK). Approve or `POST /api/sales/bookings/:id/payment-link` calls `utils/razorpay.js` `createPaymentLink()` (amount in **paise**), stores `paymentLink` (short URL), `paymentLinkId`, `paymentLinkExpiresAt`, `paymentStatus: LINK_SENT`, and appends to `paymentHistory`.
+- Webhook: `POST /api/payments/razorpay/webhook` uses `express.raw({ type: 'application/json' })` and `verifyWebhookSignature()` (HMAC over the raw body). **This route must stay registered before the global `express.json()` in `server.js`** or the raw body/signature check breaks. Handles `payment_link.paid` (→ CONFIRMED + PAID) and `expired`/`cancelled` (→ LINK_EXPIRED). `GET /api/payments/bookings/:id/payment-status` (sales) polls Razorpay to sync link status.
+- Notifications (`models/Notification.js`, `utils/notify.js`): docs keyed by `recipientType` (`user`|`sales`|`admin`) + `recipient` via `refPath`. Created on booking submit/cancel (to all sales), approve/reject/confirm/complete/payment (to the user). Read via `GET /api/notifications` (user) and `GET /api/sales/notifications` (sales); mark-read at `PUT .../notifications/read`.
+- Gotcha: `notify()` **destructures a single object arg** (`{ recipientType, recipient, type, title, ... }`), and `utils/bookingHistory.js` `notifyAllSales()` uses it that way — but several calls in `salesController.js` invoke it **positionally** (`notify(booking.user, 'user', {...})`). Those user notifications silently fail (validation error is swallowed by `notify()`); use the object form like `paymentController.js` does.
+- `utils/bookingHistory.js` `addHistory(booking, { actor, actorType, action, note, changes })` appends to the booking `history` array — use it for auditable sales/system actions.
 
 ## Frontend sessions, guards & routes
 

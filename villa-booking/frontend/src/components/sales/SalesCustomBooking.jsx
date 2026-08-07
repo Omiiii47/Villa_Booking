@@ -1,8 +1,20 @@
 'use client'
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { FaTimes, FaSave, FaPaperPlane } from 'react-icons/fa';
 import * as salesService from '../../services/salesService';
 import SalesPricingEditor from './SalesPricingEditor';
+
+const lockBodyScroll = () => {
+  const prev = document.body.style.overflow;
+  document.body.style.overflow = 'hidden';
+  const lenis = window.__lenis;
+  if (lenis && typeof lenis.stop === 'function') lenis.stop();
+  return () => {
+    document.body.style.overflow = prev;
+    const l = window.__lenis;
+    if (l && typeof l.start === 'function') l.start();
+  };
+};
 
 const num = (v) => (v === '' || v === null || v === undefined ? 0 : Number(v));
 
@@ -22,6 +34,8 @@ const SalesCustomBooking = ({ villas, onClose, onSaved }) => {
   const [pricing, setPricing] = useState(emptyPricing);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState('');
+
+  useEffect(() => lockBodyScroll(), []);
 
   const nights = f.checkIn && f.checkOut ? Math.max(1, Math.ceil((new Date(f.checkOut) - new Date(f.checkIn)) / (1000 * 60 * 60 * 24))) : 0;
   const set = (key) => (e) => setF({ ...f, [key]: e.target.value });
@@ -56,8 +70,8 @@ const SalesCustomBooking = ({ villas, onClose, onSaved }) => {
   const handleCreateAndOffer = () => run(() => salesService.createCustomBooking(payload(true)));
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" onClick={onClose}>
-      <div className="bg-white rounded-3xl max-w-4xl w-full max-h-[92vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4 overscroll-contain" onClick={onClose}>
+      <div data-lenis-prevent className="bg-white rounded-3xl max-w-4xl w-full max-h-[92vh] min-h-0 overflow-y-auto overscroll-contain" onClick={(e) => e.stopPropagation()}>
         <div className="sticky top-0 bg-white flex items-start justify-between p-6 pb-4 border-b border-gray-100 z-10">
           <div>
             <h3 className="font-display text-2xl">Create Custom Booking</h3>

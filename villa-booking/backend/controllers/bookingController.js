@@ -1,5 +1,7 @@
 const Booking = require('../models/Booking');
 const Villa = require('../models/Villa');
+const { addHistory, notifyAllSales } = require('../utils/bookingHistory');
+const { notify } = require('../utils/notify');
 
 const createBooking = async (req, res) => {
   try {
@@ -43,7 +45,7 @@ const createBooking = async (req, res) => {
 
     const overlapping = await Booking.findOne({
       villa: villaId,
-      status: { $in: ['pending', 'pending-custom', 'confirmed'] },
+      bookingStatus: { $in: ['PAYMENT_PENDING', 'CONFIRMED'] },
       $or: [
         { checkIn: { $lt: checkOutDate }, checkOut: { $gt: checkInDate } },
       ],
@@ -64,8 +66,8 @@ const createBooking = async (req, res) => {
       kids: kidsCount,
       infants: infantsCount,
       pets: petsCount,
-      totalPrice: estimatedPrice,
-      estimatedPrice,
+      totalPrice: 0,
+      estimatedPrice: 0,
       customerName: req.user.name,
       customerEmail: req.user.email,
       customerPhone,
@@ -73,12 +75,23 @@ const createBooking = async (req, res) => {
       purposeOfStay,
       arrivalTime,
       specialRequests,
-      status: 'pending',
+      reviewStatus: 'PENDING',
+      bookingStatus: 'PAYMENT_PENDING',
+      paymentStatus: 'UNPAID',
       isCustomBooking: isOverCapacity,
       requiresManualReview: isOverCapacity,
       standardCapacity: isOverCapacity ? villa.capacity : undefined,
       requestedGuests: isOverCapacity ? guestCount : undefined,
       extraGuests: isOverCapacity ? extraGuests : undefined,
+      history: [
+        {
+          actor: req.user.name,
+          actorType: 'user',
+          action: 'Booking created',
+          note: `${villa.name} · ${guestCount} guest(s) · ${nights} night(s)`,
+          at: new Date(),
+        },
+      ],
       customPricing: isOverCapacity
         ? {
             basePrice: villa.pricePerNight,
@@ -95,10 +108,17 @@ const createBooking = async (req, res) => {
             airportPickup: 0,
             discount: 0,
             complimentaryServices: '',
-            totalPerNight: villa.pricePerNight,
-            totalAmount: estimatedPrice,
+            totalPerNight: 0,
+            totalAmount: 0,
           }
         : undefined,
+    });
+
+    await notifyAllSales({
+      type: 'booking_submitted',
+      reference: booking._id,
+      title: 'New booking request',
+      message: `${req.user.name} requested ${villa.name} (${nights} night(s), ${guestCount} guest(s)).`,
     });
 
     const populated = await Booking.findById(booking._id).populate('villa', 'name images pricePerNight capacity location');
@@ -111,7 +131,7 @@ const createBooking = async (req, res) => {
 const getUserBookings = async (req, res) => {
   try {
     const bookings = await Booking.find({ user: req.user._id })
-      .select('-internalNotes')
+      .select('-internalNotes -history')
       .populate('villa', 'name images pricePerNight location slug')
       .sort({ createdAt: -1 });
     res.json(bookings);
@@ -123,7 +143,7 @@ const getUserBookings = async (req, res) => {
 const getBookingById = async (req, res) => {
   try {
     const booking = await Booking.findById(req.params.id)
-      .select('-internalNotes')
+      .select('-internalNotes -history')
       .populate('villa', 'name images pricePerNight location slug description')
       .populate('user', 'name email phone');
 
@@ -153,9 +173,32 @@ const cancelBooking = async (req, res) => {
       return res.status(403).json({ message: 'Not authorized' });
     }
 
-    booking.status = 'cancelled';
+    if (booking.bookingStatus !== 'PAYMENT_PENDING' && booking.bookingStatus !== 'CONFIRMED') {
+      return res.status(400).json({
+        message: 'This booking can no longer be cancelled.',
+      });
+    }
+
+    booking.bookingStatus = 'CANCELLED';
+    booking.cancelledBy = 'customer';
+    booking.cancelledAt = new Date();
+    booking.cancellationReason = req.body.reason || 'Customer cancelled the booking';
+    addHistory(booking, {
+      actor: req.user.name,
+      actorType: 'user',
+      action: 'Booking cancelled',
+      note: booking.cancellationReason,
+    });
     await booking.save();
-    res.json({ message: 'Booking cancelled' });
+
+    await notifyAllSales({
+      type: 'booking_cancelled',
+      reference: booking._id,
+      title: 'Booking cancelled by customer',
+      message: `${req.user.name} cancelled their booking.`,
+    });
+
+    res.json({ message: 'Booking cancelled', booking });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

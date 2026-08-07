@@ -17,12 +17,15 @@ const SmoothScroll = () => {
 
     lenis.on('scroll', () => ScrollTrigger.update());
 
+    window.__lenis = lenis;
+
     gsap.ticker.add((time) => {
       lenis.raf(time * 1000);
     });
     gsap.ticker.lagSmoothing(0);
 
     return () => {
+      if (window.__lenis === lenis) window.__lenis = null;
       lenis.destroy();
     };
   }, []);

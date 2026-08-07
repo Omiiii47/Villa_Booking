@@ -16,6 +16,7 @@ const app = express();
 app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 app.use(morgan('dev'));
 app.use(cors());
+app.use('/api/payments', require('./routes/paymentRoutes'));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: false }));
 
@@ -25,6 +26,7 @@ app.use('/api/auth', require('./routes/userAuthRoutes'));
 app.use('/api/admin-auth', require('./routes/adminAuthRoutes'));
 app.use('/api/villas', require('./routes/villaRoutes'));
 app.use('/api/bookings', require('./routes/bookingRoutes'));
+app.use('/api/notifications', require('./routes/notificationRoutes'));
 app.use('/api/reviews', require('./routes/reviewRoutes'));
 app.use('/api/users', require('./routes/userRoutes'));
 app.use('/api/contact', require('./routes/contactRoutes'));

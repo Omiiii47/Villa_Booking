@@ -22,20 +22,22 @@ const SalesPricingEditor = ({ pricing, onChange, nights }) => {
       : Math.max(0, totalPerNight * nights);
 
   const fields = [
-    { key: 'basePrice', label: 'Base Price / Night' },
-    { key: 'extraGuestFee', label: 'Extra Guest Fee / Guest' },
-    { key: 'extraGuestCount', label: 'Extra Guest Count' },
-    { key: 'cleaningFee', label: 'Cleaning Fee' },
-    { key: 'additionalServices', label: 'Additional Services' },
-    { key: 'housekeepingCharges', label: 'Extra Housekeeping' },
-    { key: 'beddingCharges', label: 'Extra Bedding' },
-    { key: 'securityCharges', label: 'Security / Maintenance' },
-    { key: 'transportation', label: 'Transportation' },
-    { key: 'chefServices', label: 'Chef Services' },
-    { key: 'decoration', label: 'Decoration' },
-    { key: 'airportPickup', label: 'Airport Pickup' },
-    { key: 'discount', label: 'Discount' },
+    { key: 'basePrice', label: 'Base Price / Night', step: 500 },
+    { key: 'extraGuestFee', label: 'Extra Guest Fee / Guest', step: 100 },
+    { key: 'extraGuestCount', label: 'Extra Guest Count', step: 1 },
+    { key: 'cleaningFee', label: 'Cleaning Fee', step: 100 },
+    { key: 'additionalServices', label: 'Additional Services', step: 100 },
+    { key: 'housekeepingCharges', label: 'Extra Housekeeping', step: 100 },
+    { key: 'beddingCharges', label: 'Extra Bedding', step: 100 },
+    { key: 'securityCharges', label: 'Security / Maintenance', step: 100 },
+    { key: 'transportation', label: 'Transportation', step: 100 },
+    { key: 'chefServices', label: 'Chef Services', step: 100 },
+    { key: 'decoration', label: 'Decoration', step: 100 },
+    { key: 'airportPickup', label: 'Airport Pickup', step: 100 },
+    { key: 'discount', label: 'Discount', step: 100 },
   ];
+
+  const step = (value, delta, min = 0) => onChange(String(Math.max(min, (num(value) || 0) + delta)));
 
   return (
     <div>
@@ -43,12 +45,24 @@ const SalesPricingEditor = ({ pricing, onChange, nights }) => {
         {fields.map((f) => (
           <div key={f.key}>
             <label className="block text-xs font-medium text-gray-600 mb-1">{f.label}</label>
-            <input type="number" min="0" value={pricing[f.key]} onChange={(e) => onChange(f.key, e.target.value)} className="input-field rounded-xl w-full" />
+            <div className="flex items-center gap-1.5 rounded-xl border border-gray-200 px-1 py-1">
+              <button type="button" aria-label={`Decrease ${f.label}`} onClick={() => step(pricing[f.key], -f.step)}
+                className="w-7 h-7 shrink-0 rounded-full bg-luxury-cream hover:bg-gray-200 flex items-center justify-center text-gray-600">−</button>
+              <input type="number" min="0" value={pricing[f.key]} onChange={(e) => onChange(f.key, e.target.value)} className="w-full min-w-0 bg-transparent text-center text-sm font-medium" />
+              <button type="button" aria-label={`Increase ${f.label}`} onClick={() => step(pricing[f.key], f.step)}
+                className="w-7 h-7 shrink-0 rounded-full bg-luxury-cream hover:bg-gray-200 flex items-center justify-center text-gray-600">+</button>
+            </div>
           </div>
         ))}
         <div>
           <label className="block text-xs font-medium text-gray-600 mb-1">Override Total</label>
-          <input type="number" min="0" value={pricing.overrideAmount ?? ''} onChange={(e) => onChange('overrideAmount', e.target.value)} className="input-field rounded-xl w-full" placeholder="Optional" />
+          <div className="flex items-center gap-1.5 rounded-xl border border-gray-200 px-1 py-1">
+            <button type="button" aria-label="Decrease Override Total" onClick={() => step(pricing.overrideAmount, -500)}
+              className="w-7 h-7 shrink-0 rounded-full bg-luxury-cream hover:bg-gray-200 flex items-center justify-center text-gray-600">−</button>
+            <input type="number" min="0" value={pricing.overrideAmount ?? ''} onChange={(e) => onChange('overrideAmount', e.target.value)} className="w-full min-w-0 bg-transparent text-center text-sm font-medium" placeholder="Optional" />
+            <button type="button" aria-label="Increase Override Total" onClick={() => step(pricing.overrideAmount, 500)}
+              className="w-7 h-7 shrink-0 rounded-full bg-luxury-cream hover:bg-gray-200 flex items-center justify-center text-gray-600">+</button>
+          </div>
         </div>
       </div>
       <textarea value={pricing.complimentaryServices} onChange={(e) => onChange('complimentaryServices', e.target.value)} rows={2} className="input-field rounded-xl w-full mt-3 resize-none" placeholder="Complimentary services (e.g. welcome hamper, late checkout)" />
