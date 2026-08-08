@@ -2,28 +2,34 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { FaCalendar, FaUsers, FaCommentDots, FaCheck, FaLock, FaUser, FaChild, FaBaby, FaPaw, FaPhone, FaGlobe, FaBriefcase, FaClock } from 'react-icons/fa';
+import { FaCalendar, FaUsers, FaCommentDots, FaCheck, FaLock, FaUser, FaChild, FaBaby, FaPaw, FaPhone, FaBriefcase } from 'react-icons/fa';
 import { getVillaBySlug } from '../services/villaService';
 import { createBooking } from '../services/bookingService';
 import AvailabilityCalendar from '../components/AvailabilityCalendar';
 import Magnetic from '../components/Magnetic';
+import { useUserAuth } from '../context/UserAuthContext';
 
 const Booking = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { user } = useUserAuth();
   const slug = searchParams.get('slug');
   const prefill = { checkIn: searchParams.get('checkIn') || '', checkOut: searchParams.get('checkOut') || '' };
   const [villa, setVilla] = useState(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
-  const [form, setForm] = useState({ checkIn: prefill.checkIn, checkOut: prefill.checkOut, adults: 2, kids: 0, infants: 0, pets: 0, purposeOfStay: '', arrivalTime: '', customerPhone: '', customerCountry: '', specialRequests: '' });
+  const [form, setForm] = useState({ checkIn: prefill.checkIn, checkOut: prefill.checkOut, adults: 2, kids: 0, infants: 0, pets: 0, purposeOfStay: '', customerPhone: user?.phone || '', specialRequests: '' });
 
-  useEffect(() => {
+useEffect(() => {
     if (!slug) { router.push('/villas'); return; }
     const fetch = async () => { try { setVilla(await getVillaBySlug(slug)); } catch { router.push('/villas'); } setLoading(false); };
     fetch();
   }, [slug, router]);
+
+  useEffect(() => {
+    if (user?.phone) setForm((prev) => (prev.customerPhone ? prev : { ...prev, customerPhone: user.phone }));
+  }, [user]);
 
   const capacity = villa?.capacity || 10;
   const nights = () => { if (!form.checkIn || !form.checkOut) return 0; return Math.max(0, Math.ceil((new Date(form.checkOut) - new Date(form.checkIn)) / (1000 * 60 * 60 * 24))); };
@@ -40,7 +46,7 @@ const Booking = () => {
     if (!form.checkIn || !form.checkOut) return;
     setSubmitting(true);
     try {
-      await createBooking({ villa: villa._id, checkIn: form.checkIn, checkOut: form.checkOut, adults: adultsCount, kids: kidsCount, infants: infantsCount, pets: petsCount, purposeOfStay: form.purposeOfStay, arrivalTime: form.arrivalTime, customerPhone: form.customerPhone, customerCountry: form.customerCountry, specialRequests: form.specialRequests });
+      await createBooking({ villa: villa._id, checkIn: form.checkIn, checkOut: form.checkOut, adults: adultsCount, kids: kidsCount, infants: infantsCount, pets: petsCount, purposeOfStay: form.purposeOfStay, customerPhone: form.customerPhone, specialRequests: form.specialRequests });
       setSuccess(true);
     }
     catch (err) { alert(err.response?.data?.message || 'Booking failed'); }
@@ -123,23 +129,15 @@ const Booking = () => {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div>
-                  <label className="flex items-center gap-2 text-sm font-medium mb-2"><FaBriefcase className="text-luxury-accent" /> Purpose of Stay</label>
-                  <select value={form.purposeOfStay} onChange={(e) => setForm({ ...form, purposeOfStay: e.target.value })} className="input-field rounded-2xl">
+                  <label className="flex items-center gap-2 text-sm font-medium mb-2"><FaBriefcase className="text-luxury-accent" /> Purpose of Stay <span className="text-red-400">*</span></label>
+                  <select required value={form.purposeOfStay} onChange={(e) => setForm({ ...form, purposeOfStay: e.target.value })} className="input-field rounded-2xl">
                     <option value="">Select purpose</option>
                     {['Vacation', 'Wedding', 'Family Reunion', 'Business / Workation', 'Celebration', 'Retreat', 'Other'].map((o) => <option key={o} value={o}>{o}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="flex items-center gap-2 text-sm font-medium mb-2"><FaClock className="text-luxury-accent" /> Arrival Time</label>
-                  <input type="time" value={form.arrivalTime} onChange={(e) => setForm({ ...form, arrivalTime: e.target.value })} className="input-field rounded-2xl" />
-                </div>
-                <div>
-                  <label className="flex items-center gap-2 text-sm font-medium mb-2"><FaPhone className="text-luxury-accent" /> Phone Number</label>
-                  <input type="tel" value={form.customerPhone} onChange={(e) => setForm({ ...form, customerPhone: e.target.value })} placeholder="+1 555 000 0000" className="input-field rounded-2xl" />
-                </div>
-                <div>
-                  <label className="flex items-center gap-2 text-sm font-medium mb-2"><FaGlobe className="text-luxury-accent" /> Country</label>
-                  <input value={form.customerCountry} onChange={(e) => setForm({ ...form, customerCountry: e.target.value })} placeholder="e.g. India" className="input-field rounded-2xl" />
+                  <label className="flex items-center gap-2 text-sm font-medium mb-2"><FaPhone className="text-luxury-accent" /> Phone Number <span className="text-red-400">*</span></label>
+                  <input type="tel" required value={form.customerPhone} onChange={(e) => setForm({ ...form, customerPhone: e.target.value })} placeholder="+1 555 000 0000" className="input-field rounded-2xl" />
                 </div>
               </div>
               <div>
@@ -148,7 +146,7 @@ const Booking = () => {
                   rows={4} placeholder="Any special requirements?" className="input-field rounded-2xl resize-none" />
               </div>
               <Magnetic>
-                <button type="submit" disabled={submitting || !form.checkIn || !form.checkOut}
+                <button type="submit" disabled={submitting || !form.checkIn || !form.checkOut || !form.purposeOfStay || !form.customerPhone}
                   className="btn-primary w-full disabled:opacity-50 text-[10px]">
                   <span>{submitting ? 'Processing...' : 'Submit Booking Request (Free)'}</span>
                 </button>

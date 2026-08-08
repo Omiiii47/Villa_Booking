@@ -34,6 +34,14 @@ const createBooking = async (req, res) => {
       return res.status(400).json({ message: 'Check-out must be after check-in' });
     }
 
+    if (!purposeOfStay || !String(purposeOfStay).trim()) {
+      return res.status(400).json({ message: 'Please add a purpose of stay' });
+    }
+
+    if (!customerPhone || !String(customerPhone).trim()) {
+      return res.status(400).json({ message: 'Please add a contact phone number' });
+    }
+
     const nights = Math.ceil((checkOutDate - checkInDate) / (1000 * 60 * 60 * 24));
     const estimatedPrice = nights * villa.pricePerNight;
 
