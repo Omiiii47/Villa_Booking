@@ -1,8 +1,9 @@
 'use client'
-import { useState, useEffect } from 'react';
-import { FaTimes, FaSave, FaPaperPlane } from 'react-icons/fa';
+import { useState, useEffect, useRef } from 'react';
+import { FaTimes, FaSave, FaPaperPlane, FaSearch, FaCheck } from 'react-icons/fa';
 import * as salesService from '../../services/salesService';
 import SalesPricingEditor from './SalesPricingEditor';
+import AvailabilityCalendar from '../AvailabilityCalendar';
 
 const lockBodyScroll = () => {
   const prev = document.body.style.overflow;
@@ -26,7 +27,7 @@ const emptyPricing = {
 
 const SalesCustomBooking = ({ villas, onClose, onSaved }) => {
   const [f, setF] = useState({
-    customerName: '', customerEmail: '', customerPhone: '', customerCountry: '',
+    username: '', customerName: '', customerEmail: '', customerPhone: '', customerCountry: '',
     villa: villas[0]?._id || '', checkIn: '', checkOut: '',
     adults: 2, kids: 0, infants: 0, pets: 0,
     purposeOfStay: '', arrivalTime: '', specialRequests: '', internalNotes: '',
@@ -34,16 +35,56 @@ const SalesCustomBooking = ({ villas, onClose, onSaved }) => {
   const [pricing, setPricing] = useState(emptyPricing);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState('');
+  const [lookup, setLookup] = useState({ busy: false, status: 'idle' });
+  const usernameTimer = useRef(null);
 
   useEffect(() => lockBodyScroll(), []);
+
+  const lookupUsername = async (raw) => {
+    const username = String(raw || '').trim().toLowerCase();
+    if (!username) { setLookup({ status: 'idle' }); return; }
+    setLookup({ status: 'loading' });
+    try {
+      const data = await salesService.lookupUserByUsername(username);
+      setF((prev) => ({
+        ...prev,
+        customerName: prev.customerName || data.name || '',
+        customerEmail: data.email || '',
+        customerPhone: data.phone || '',
+      }));
+      setLookup({ status: 'found' });
+    } catch (e) {
+      setF((prev) => ({ ...prev, customerEmail: '', customerPhone: '' }));
+      setLookup({ status: 'error' });
+    }
+  };
+
+  const handleUsernameChange = (e) => {
+    const value = e.target.value;
+    setF((prev) => ({ ...prev, username: value }));
+    clearTimeout(usernameTimer.current);
+    if (String(value).trim().length >= 3) {
+      usernameTimer.current = setTimeout(() => lookupUsername(value), 600);
+    } else {
+      setLookup({ status: 'idle' });
+    }
+  };
 
   const nights = f.checkIn && f.checkOut ? Math.max(1, Math.ceil((new Date(f.checkOut) - new Date(f.checkIn)) / (1000 * 60 * 60 * 24))) : 0;
   const set = (key) => (e) => setF({ ...f, [key]: e.target.value });
   const setP = (key, value) => setPricing({ ...pricing, [key]: value });
 
+  const handleCalendarChange = (v) => setF((prev) => ({ ...prev, checkIn: v.checkIn || '', checkOut: v.checkOut || '' }));
+  const handleVillaChange = (e) => setF((prev) => ({
+    ...prev,
+    villa: e.target.value,
+    checkIn: e.target.value !== prev.villa ? '' : prev.checkIn,
+    checkOut: e.target.value !== prev.villa ? '' : prev.checkOut,
+  }));
+
   const payload = (sendOffer) => ({
     customerName: f.customerName, customerEmail: f.customerEmail, customerPhone: f.customerPhone,
-    customerCountry: f.customerCountry, villa: f.villa, checkIn: f.checkIn, checkOut: f.checkOut,
+    customerCountry: f.customerCountry, username: f.username || undefined, villa: f.villa, checkIn: f.checkIn, checkOut: f.checkOut,
     adults: num(f.adults), kids: num(f.kids), infants: num(f.infants), pets: num(f.pets),
     purposeOfStay: f.purposeOfStay, arrivalTime: f.arrivalTime, specialRequests: f.specialRequests,
     internalNotes: f.internalNotes,
@@ -86,6 +127,18 @@ const SalesCustomBooking = ({ villas, onClose, onSaved }) => {
           <div>
             <h4 className="font-medium mb-3">Customer</h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="sm:col-span-2">
+                <label className="block text-xs font-medium text-gray-600 mb-1">Username (auto-fills name, email &amp; phone)</label>
+                <div className="flex gap-2">
+                  <input value={f.username} onChange={handleUsernameChange} onBlur={() => lookupUsername(f.username)} className="input-field rounded-xl w-full" placeholder="e.g. johndoe" />
+                  <button type="button" onClick={() => lookupUsername(f.username)} aria-label="Look up user"
+                    className="shrink-0 px-4 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-600 flex items-center justify-center">
+                    {lookup.status === 'error' ? <span className="text-xs text-red-500 font-medium">Not found</span> : lookup.status === 'loading' ? <span className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" /> : lookup.status === 'found' ? <FaCheck className="text-emerald-600" /> : <FaSearch />}
+                  </button>
+                </div>
+                {lookup.status === 'found' && <p className="text-[11px] text-emerald-600 mt-1">User found — details filled automatically. You can edit them if needed.</p>}
+                {lookup.status === 'error' && <p className="text-[11px] text-red-500 mt-1">No user found with this username. Details stay as typed or leave a new booking request via the website.</p>}
+              </div>
               <div><label className="block text-xs font-medium text-gray-600 mb-1">Full Name *</label><input value={f.customerName} onChange={set('customerName')} className="input-field rounded-xl w-full" /></div>
               <div><label className="block text-xs font-medium text-gray-600 mb-1">Email *</label><input type="email" value={f.customerEmail} onChange={set('customerEmail')} className="input-field rounded-xl w-full" /></div>
               <div><label className="block text-xs font-medium text-gray-600 mb-1">Phone</label><input value={f.customerPhone} onChange={set('customerPhone')} className="input-field rounded-xl w-full" /></div>
@@ -96,7 +149,7 @@ const SalesCustomBooking = ({ villas, onClose, onSaved }) => {
           <div>
             <h4 className="font-medium mb-3">Villa, Dates &amp; Guests</h4>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div><label className="block text-xs font-medium text-gray-600 mb-1">Villa *</label><select value={f.villa} onChange={set('villa')} className="input-field rounded-xl w-full">{villas.map((v) => <option key={v._id} value={v._id}>{v.name} (${v.pricePerNight}/night)</option>)}</select></div>
+              <div><label className="block text-xs font-medium text-gray-600 mb-1">Villa *</label><select value={f.villa} onChange={handleVillaChange} className="input-field rounded-xl w-full">{villas.map((v) => <option key={v._id} value={v._id}>{v.name} (${v.pricePerNight}/night)</option>)}</select></div>
               <div><label className="block text-xs font-medium text-gray-600 mb-1">Check-in *</label><input type="date" value={f.checkIn} onChange={set('checkIn')} className="input-field rounded-xl w-full" /></div>
               <div><label className="block text-xs font-medium text-gray-600 mb-1">Check-out *</label><input type="date" value={f.checkOut} onChange={set('checkOut')} className="input-field rounded-xl w-full" /></div>
               <div><label className="block text-xs font-medium text-gray-600 mb-1">Adults</label><input type="number" min="1" value={f.adults} onChange={set('adults')} className="input-field rounded-xl w-full" /></div>
@@ -107,6 +160,12 @@ const SalesCustomBooking = ({ villas, onClose, onSaved }) => {
               <div><label className="block text-xs font-medium text-gray-600 mb-1">Arrival Time</label><input type="time" value={f.arrivalTime} onChange={set('arrivalTime')} className="input-field rounded-xl w-full" /></div>
             </div>
             <textarea value={f.specialRequests} onChange={set('specialRequests')} rows={2} className="input-field rounded-xl w-full mt-3 resize-none" placeholder="Special requests" />
+            {f.villa && (
+              <div className="mt-4">
+                <label className="block text-xs font-medium text-gray-600 mb-2">Availability — select dates from the calendar</label>
+                <AvailabilityCalendar villaId={f.villa} value={{ checkIn: f.checkIn, checkOut: f.checkOut }} onChange={handleCalendarChange} />
+              </div>
+            )}
           </div>
 
           <div>

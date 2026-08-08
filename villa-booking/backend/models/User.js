@@ -4,9 +4,10 @@ const bcrypt = require('bcryptjs');
 const userSchema = mongoose.Schema(
   {
     name: { type: String, required: [true, 'Please add a name'] },
+    username: { type: String, required: [true, 'Please add a username'], unique: true, trim: true, lowercase: true },
     email: { type: String, required: [true, 'Please add an email'], unique: true, lowercase: true },
     password: { type: String, required: [true, 'Please add a password'], minlength: 6, select: false },
-    phone: { type: String },
+    phone: { type: String, required: [true, 'Please add a phone number'] },
     avatar: { type: String, default: '' },
     wishlist: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Villa' }],
   },

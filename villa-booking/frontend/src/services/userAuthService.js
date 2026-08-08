@@ -6,8 +6,8 @@ export const loginUser = async (email, password) => {
   return data;
 };
 
-export const registerUser = async (name, email, password) => {
-  const { data } = await userApi.post('/auth/register', { name, email, password });
+export const registerUser = async (name, username, email, phone, password) => {
+  const { data } = await userApi.post('/auth/register', { name, username, email, phone, password });
   localStorage.setItem('solscapeUser', JSON.stringify(data));
   return data;
 };

@@ -45,6 +45,11 @@ export const createCustomBooking = async (payload) => {
   return data;
 };
 
+export const lookupUserByUsername = async (username) => {
+  const { data } = await salesApi.get('/sales/users/lookup', { params: { username } });
+  return data;
+};
+
 export const getDashboardStats = async () => {
   const { data } = await salesApi.get('/sales/stats');
   return data;

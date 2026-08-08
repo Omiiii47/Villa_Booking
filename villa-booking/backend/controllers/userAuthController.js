@@ -7,24 +7,41 @@ const generateToken = (id) => {
 
 const register = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, username, email, password, phone } = req.body;
+
+    if (!name || !username || !email || !password || !phone) {
+      return res.status(400).json({ message: 'Please fill in all fields (name, username, email, phone, password)' });
+    }
 
     const userExists = await User.findOne({ email });
     if (userExists) {
       return res.status(400).json({ message: 'User already exists' });
     }
 
-    const user = await User.create({ name, email, password });
+    const usernameExists = await User.findOne({ username });
+    if (usernameExists) {
+      return res.status(400).json({ message: 'Username already taken' });
+    }
+
+    const user = await User.create({ name, username, email, password, phone });
 
     res.status(201).json({
       _id: user._id,
       name: user.name,
+      username: user.username,
       email: user.email,
+      phone: user.phone,
       avatar: user.avatar,
       wishlist: user.wishlist,
       token: generateToken(user._id),
     });
   } catch (error) {
+    if (error.code === 11000) {
+      if (error.keyPattern && error.keyPattern.username) {
+        return res.status(400).json({ message: 'Username already taken' });
+      }
+      return res.status(400).json({ message: 'User already exists' });
+    }
     res.status(500).json({ message: error.message });
   }
 };
@@ -46,7 +63,9 @@ const login = async (req, res) => {
     res.json({
       _id: user._id,
       name: user.name,
+      username: user.username,
       email: user.email,
+      phone: user.phone,
       avatar: user.avatar,
       wishlist: user.wishlist,
       token: generateToken(user._id),
@@ -73,6 +92,7 @@ const updateProfile = async (req, res) => {
     }
 
     user.name = req.body.name || user.name;
+    user.username = req.body.username ? String(req.body.username).trim().toLowerCase() : user.username;
     user.email = req.body.email || user.email;
     user.phone = req.body.phone || user.phone;
 
@@ -80,12 +100,19 @@ const updateProfile = async (req, res) => {
       user.password = req.body.password;
     }
 
+    const usernameTaken = await User.findOne({ username: user.username, _id: { $ne: user._id } });
+    if (usernameTaken) {
+      return res.status(400).json({ message: 'Username already taken' });
+    }
+
     const updatedUser = await user.save();
 
     res.json({
       _id: updatedUser._id,
       name: updatedUser.name,
+      username: updatedUser.username,
       email: updatedUser.email,
+      phone: updatedUser.phone,
       avatar: updatedUser.avatar,
       wishlist: updatedUser.wishlist,
       token: generateToken(updatedUser._id),

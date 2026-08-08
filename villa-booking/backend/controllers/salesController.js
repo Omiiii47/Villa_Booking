@@ -751,6 +751,22 @@ const clearPaymentLink = async (req, res) => {
   }
 };
 
+const lookupUserByUsername = async (req, res) => {
+  try {
+    const username = String(req.query.username || '').trim().toLowerCase();
+    if (!username) {
+      return res.status(400).json({ message: 'Username is required' });
+    }
+    const user = await User.findOne({ username }).select('name username email phone');
+    if (!user) {
+      return res.status(404).json({ message: 'No user found with this username' });
+    }
+    res.json({ _id: user._id, name: user.name, username: user.username, email: user.email, phone: user.phone });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 const createCustomBooking = async (req, res) => {
   try {
     const {
@@ -758,6 +774,7 @@ const createCustomBooking = async (req, res) => {
       customerEmail,
       customerPhone,
       customerCountry,
+      username,
       villa: villaId,
       checkIn,
       checkOut,
@@ -794,10 +811,25 @@ const createCustomBooking = async (req, res) => {
     const petsCount = Number(pets) || 0;
     const guestCount = Math.max(1, adultsCount + kidsCount + infantsCount);
 
-    let user = await User.findOne({ email: customerEmail.toLowerCase() });
+    let user = null;
+    if (username) {
+      user = await User.findOne({ username: String(username).trim().toLowerCase() });
+      if (!user) {
+        return res.status(400).json({ message: 'No user found with this username' });
+      }
+    }
+    if (!user) user = await User.findOne({ email: customerEmail.toLowerCase() });
     if (!user) {
+      const baseUsername = (customerEmail.split('@')[0] || 'customer').toLowerCase().replace(/[^a-z0-9_]/g, '').slice(0, 20) || 'customer';
+      let username = baseUsername;
+      let i = 1;
+      while (await User.findOne({ username })) {
+        username = `${baseUsername}${i}`;
+        i += 1;
+      }
       user = await User.create({
         name: customerName,
+        username,
         email: customerEmail.toLowerCase(),
         password: Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2),
         phone: customerPhone,
@@ -872,9 +904,79 @@ const createCustomBooking = async (req, res) => {
         draft.customPricing = pricing;
       }
       applyQuotation(draft, pricing);
+      draft.reviewStatus = 'APPROVED';
+      draft.bookingStatus = 'APPROVED';
+      draft.requiresManualReview = false;
+      draft.approvedBy = req.admin._id;
+      draft.approvedAt = new Date();
     }
 
     const booking = await draft.save();
+
+    if (sendOffer) {
+      if (razorpay.setupError()) {
+        return res.status(400).json({ message: `A payment link is required to send an offer — ${razorpay.setupError()}` });
+      }
+      const amountPaise = bookingAmountInPaise(booking);
+      if (amountPaise <= 0) {
+        return res.status(400).json({ message: 'Cannot send an offer — the booking has no amount to charge.' });
+      }
+      const expiresAt = new Date(Date.now() + DEFAULT_PAYMENT_EXPIRY_HOURS * 60 * 60 * 1000);
+      const link = await razorpay.createPaymentLink({
+        amount: amountPaise,
+        currency: 'INR',
+        description: `Villa booking payment — ${booking.customerName || 'Guest'}`,
+        referenceId: String(booking._id),
+        expireBy: Math.floor(expiresAt.getTime() / 1000),
+        notes: { booking_id: String(booking._id) },
+        customer: {
+          name: booking.customerName || 'Guest',
+          email: booking.customerEmail || '',
+          contact: booking.customerPhone || '',
+        },
+      });
+      booking.paymentLink = link.short_url;
+      booking.paymentLinkId = link.id;
+      booking.paymentLinkExpiresAt = expiresAt;
+      booking.paymentStatus = 'LINK_SENT';
+      booking.bookingStatus = 'PAYMENT_PENDING';
+      booking.paymentHoldStartedAt = new Date();
+      booking.paymentHoldExpiresAt = holdExpiryFor();
+      booking.paymentHistory.push({
+        linkId: link.id,
+        url: link.short_url,
+        amount: amountPaise / 100,
+        currency: 'INR',
+        status: String(link.status || 'issued'),
+        expiresAt,
+        source: 'razorpay',
+        createdBy: req.admin._id,
+      });
+      addHistory(booking, {
+        actor: req.admin.name,
+        actorType: 'sales',
+        action: 'Custom offer sent with payment link',
+        note: `Quotation generated at $${pricing.totalAmount} and payment link sent to the customer.`,
+        changes: { reviewStatus: 'APPROVED', bookingStatus: 'PAYMENT_PENDING', quotedPrice: pricing.totalAmount, paymentLink: booking.paymentLink },
+      });
+      await booking.save();
+
+      await notify({
+        recipientType: 'user',
+        recipient: booking.user,
+        type: 'booking_approved',
+        reference: booking._id,
+        title: 'Your booking offer is ready',
+        message: `Your custom booking offer for ${villa.name} is approved. Final quotation: $${pricing.totalAmount}. A payment link is on your dashboard — complete payment to confirm.`,
+      });
+      await notifyAllSales({
+        type: 'offer_sent',
+        reference: booking._id,
+        title: 'Custom offer sent',
+        message: `${req.admin.name} sent a custom booking offer with a payment link.`,
+      });
+    }
+
     const populated = await Booking.findById(booking._id)
       .populate('villa', 'name images pricePerNight capacity location')
       .populate('user', 'name email phone');
@@ -995,6 +1097,7 @@ module.exports = {
   cancelBooking,
   completeBooking,
   createCustomBooking,
+  lookupUserByUsername,
   getDashboardStats,
   getMyNotifications,
   markNotificationsRead,

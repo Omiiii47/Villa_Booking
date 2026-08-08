@@ -3,13 +3,13 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { FaUser, FaEnvelope, FaLock, FaEye, FaEyeSlash } from 'react-icons/fa';
+import { FaUser, FaEnvelope, FaLock, FaPhone, FaEye, FaEyeSlash, FaUserTag } from 'react-icons/fa';
 import { useUserAuth } from '../context/UserAuthContext';
 
 const Register = () => {
   const { register } = useUserAuth();
   const router = useRouter();
-  const [form, setForm] = useState({ name: '', email: '', password: '', confirmPassword: '' });
+  const [form, setForm] = useState({ name: '', username: '', email: '', phone: '', password: '', confirmPassword: '' });
   const [error, setError] = useState('');
   const [show, setShow] = useState(false);
 
@@ -17,7 +17,7 @@ const Register = () => {
     e.preventDefault();
     setError('');
     if (form.password !== form.confirmPassword) { setError('Passwords do not match'); return; }
-    try { await register(form.name, form.email, form.password); router.push('/dashboard'); }
+    try { await register(form.name, form.username, form.email, form.phone, form.password); router.push('/dashboard'); }
     catch (err) { setError(err.response?.data?.message || 'Registration failed'); }
   };
 
@@ -33,7 +33,9 @@ const Register = () => {
           <form onSubmit={handleSubmit} className="space-y-5">
             {error && <div className="bg-red-50 text-red-500 text-sm p-3.5 rounded-2xl">⚠ {error}</div>}
             <div><label className="text-xs uppercase tracking-widest text-gray-500 mb-2 block">Full Name</label><div className="relative"><FaUser className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" /><input type="text" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required className="input-field !pl-12 rounded-2xl" placeholder="John Doe" /></div></div>
+            <div><label className="text-xs uppercase tracking-widest text-gray-500 mb-2 block">Username</label><div className="relative"><FaUserTag className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" /><input type="text" value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value })} required minLength={3} className="input-field !pl-12 rounded-2xl" placeholder="johndoe" /></div></div>
             <div><label className="text-xs uppercase tracking-widest text-gray-500 mb-2 block">Email</label><div className="relative"><FaEnvelope className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" /><input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required className="input-field !pl-12 rounded-2xl" placeholder="your@email.com" /></div></div>
+            <div><label className="text-xs uppercase tracking-widest text-gray-500 mb-2 block">Phone Number</label><div className="relative"><FaPhone className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" /><input type="tel" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} required pattern="[0-9+ ()-]{7,}" title="Enter a valid phone number" className="input-field !pl-12 rounded-2xl" placeholder="+91 98765 43210" /></div></div>
             <div><label className="text-xs uppercase tracking-widest text-gray-500 mb-2 block">Password</label><div className="relative"><FaLock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" /><input type={show ? 'text' : 'password'} value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} required minLength={6} className="input-field !pl-12 !pr-12 rounded-2xl" placeholder="••••••••" /><button type="button" onClick={() => setShow(!show)} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-300 hover:text-gray-500">{show ? <FaEyeSlash /> : <FaEye />}</button></div></div>
             <div><label className="text-xs uppercase tracking-widest text-gray-500 mb-2 block">Confirm Password</label><div className="relative"><FaLock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" /><input type={show ? 'text' : 'password'} value={form.confirmPassword} onChange={(e) => setForm({ ...form, confirmPassword: e.target.value })} required minLength={6} className="input-field !pl-12 rounded-2xl" placeholder="••••••••" /></div></div>
             <button type="submit" className="btn-primary w-full text-[10px]"><span>Create Account</span></button>
@@ -46,4 +48,3 @@ const Register = () => {
 };
 
 export default Register;
-

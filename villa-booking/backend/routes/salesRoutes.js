@@ -10,6 +10,7 @@ const {
   cancelBooking,
   completeBooking,
   createCustomBooking,
+  lookupUserByUsername,
   getDashboardStats,
   getMyNotifications,
   markNotificationsRead,
@@ -33,6 +34,7 @@ router.get('/notifications', getMyNotifications);
 router.put('/notifications/read', markNotificationsRead);
 
 router.get('/bookings', listBookings);
+router.get('/users/lookup', lookupUserByUsername);
 router.get('/bookings/:id', getBooking);
 router.post('/bookings', createCustomBooking);
 router.put('/bookings/:id', updateBooking);
