@@ -7,7 +7,6 @@ const { addHistory, notifyAllSales } = require('../utils/bookingHistory');
 const { notify } = require('../utils/notify');
 const razorpay = require('../utils/razorpay');
 const { holdExpiryFor, PAYMENT_HOLD_MINUTES } = require('../config/payment');
-
 const nightsBetween = (checkIn, checkOut) => {
   const a = new Date(checkIn);
   const b = new Date(checkOut);
@@ -459,7 +458,16 @@ const confirmPayment = async (req, res) => {
       $or: [{ checkIn: { $lt: booking.checkOut }, checkOut: { $gt: booking.checkIn } }],
     });
     for (const b of losers) {
-      b.bookingStatus = 'CANCELLED';
+      if (b.paymentLinkId) {
+        try { await razorpay.cancelPaymentLink(b.paymentLinkId); } catch { /* best effort */ }
+      }
+      b.bookingStatus = 'EXPIRED';
+      b.paymentStatus = 'FAILED';
+      b.paymentLink = '';
+      b.paymentLinkId = '';
+      b.paymentLinkExpiresAt = null;
+      b.paymentHoldStartedAt = null;
+      b.paymentHoldExpiresAt = null;
       b.cancelledBy = 'system';
       b.cancelledAt = new Date();
       b.cancellationReason = 'Another customer completed payment for this villa first.';
@@ -467,8 +475,8 @@ const confirmPayment = async (req, res) => {
         actor: 'System',
         actorType: 'system',
         action: 'First payment wins',
-        note: 'Cancelled because another booking for the same dates was paid first.',
-        changes: { bookingStatus: 'CANCELLED' },
+        note: 'Expired because another booking for the same dates was paid first.',
+        changes: { bookingStatus: 'EXPIRED', paymentStatus: 'FAILED' },
       });
       await b.save();
       await notify({
@@ -477,7 +485,7 @@ const confirmPayment = async (req, res) => {
         type: 'booking_lost_to_payment',
         reference: b._id,
         title: 'Dates no longer available',
-        message: 'Someone completed payment for this villa first, so we could not hold your dates.',
+        message: 'Another customer completed payment for this villa first, so these dates are no longer available. Your payment link has been deactivated and you have not been charged.',
       });
     }
 

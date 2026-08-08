@@ -1,112 +1,132 @@
 const mongoose = require('mongoose');
 const Booking = require('../models/Booking');
-const { verifyWebhookSignature, getPaymentLink, setupError } = require('../utils/razorpay');
+const { verifyWebhookSignature, getPaymentLink, cancelPaymentLink, setupError } = require('../utils/razorpay');
 const { addHistory, notifyAllSales } = require('../utils/bookingHistory');
 const { notify } = require('../utils/notify');
 
 /**
- * Confirm the paying booking and, in the same operation, cancel every OTHER
- * booking that is holding the same (overlapping) dates so only one customer
- * can ever win a date range. Guaranteed by wrapping the confirm +cancel in a
- * single MongoDB transaction, which is what makes this "first payment wins".
+ * Core "first payment wins" logic: confirm the paying booking and, in the same
+ * operation, expire every OTHER PAYMENT_PENDING booking overlapping the same
+ * dates (deactivating their Razorpay links) so only one customer can ever win
+ * a date range.
  *
- * Idempotency: a boost displayed by `paymentProcessedId` prevents a duplicate
- * webhook delivery from double-confirming the same payment.
+ * `session` is optional. When provided the operations run inside a Mongo
+ * transaction for atomicity (requires a replica set). Without one (single-node
+ * MongoDB) it runs the same checks sequentially — idempotency via
+ * `paymentProcessedId` plus the existing-winner / status guards keep it
+ * single-payer correct for the normal flow.
  */
+const applyWinner = async ({ bookingId, paymentId, paymentEntity, linkEntity, session }) => {
+  const exec = (modelQuery) => (session ? modelQuery.session(session) : modelQuery);
+
+  // Re-check the winning booking is still eligible.
+  const fresh = await exec(Booking.findOne({ _id: bookingId }));
+  if (!fresh) return { confirmed: false, reason: 'not_found' };
+  if (fresh.bookingStatus === 'CONFIRMED' || fresh.bookingStatus === 'COMPLETED') {
+    return { confirmed: false, reason: 'already_confirmed' };
+  }
+  if (fresh.paymentProcessedId && fresh.paymentProcessedId === paymentId) {
+    return { confirmed: false, reason: 'already_processed' };
+  }
+
+  const winIn = new Date(fresh.checkIn);
+  const winOut = new Date(fresh.checkOut);
+
+  // Cross-check: another booking overlapping these dates must NOT already be
+  // CONFIRMED. Never allow two confirmed bookings on the same range.
+  const existingWinner = await exec(Booking.findOne({
+    _id: { $ne: fresh._id },
+    villa: fresh.villa,
+    bookingStatus: { $in: ['CONFIRMED', 'COMPLETED'] },
+    $or: [{ checkIn: { $lt: winOut }, checkOut: { $gt: winIn } }],
+  }));
+  if (existingWinner) {
+    return { confirmed: false, reason: 'dates_taken' };
+  }
+
+  // Expire every overlapping PAYMENT_PENDING booking (this one excluded).
+  const losers = await exec(Booking.find({
+    _id: { $ne: fresh._id },
+    villa: fresh.villa,
+    bookingStatus: 'PAYMENT_PENDING',
+    $or: [{ checkIn: { $lt: winOut }, checkOut: { $gt: winIn } }],
+  }));
+  for (const b of losers) {
+    // Deactivate their Razorpay link so they can no longer complete payment.
+    if (b.paymentLinkId) {
+      try { await cancelPaymentLink(b.paymentLinkId); } catch { /* best effort */ }
+    }
+    b.bookingStatus = 'EXPIRED';
+    b.paymentStatus = 'FAILED';
+    b.paymentLink = '';
+    b.paymentLinkId = '';
+    b.paymentLinkExpiresAt = null;
+    b.paymentHoldStartedAt = null;
+    b.paymentHoldExpiresAt = null;
+    b.cancelledBy = 'system';
+    b.cancelledAt = new Date();
+    b.cancellationReason = 'The villa was booked by another customer for these dates before your payment was completed. You have not been charged.';
+    addHistory(b, {
+      actor: 'System',
+      actorType: 'system',
+      action: 'First payment wins',
+      note: 'Expired because another booking for the same dates was paid first.',
+      changes: { bookingStatus: 'EXPIRED', paymentStatus: 'FAILED' },
+    });
+    if (session) await b.save({ session });
+    else await b.save();
+    await notify({
+      recipientType: 'user',
+      recipient: b.user,
+      type: 'booking_lost_to_payment',
+      reference: b._id,
+      title: 'Dates no longer available',
+      message: 'Another customer completed payment for this villa first, so these dates are no longer available. Your payment link has been deactivated and you have not been charged. You can book different dates or another villa.',
+    });
+  }
+
+  // Confirm the winner.
+  fresh.paymentStatus = 'PAID';
+  fresh.bookingStatus = 'CONFIRMED';
+  fresh.paymentId = (paymentEntity && paymentEntity.id) || linkEntity.id;
+  fresh.paymentMode = 'online';
+  fresh.paymentLink = '';
+  fresh.paymentLinkId = '';
+  fresh.paymentLinkExpiresAt = null;
+  fresh.paymentProcessedId = paymentId;
+  addHistory(fresh, {
+    actor: 'Razorpay',
+    actorType: 'system',
+    action: 'Payment received / Confirmed',
+    note: 'Payment verified. Amount paid: ' + (fresh.amountPaid || ''),
+    changes: { paymentStatus: 'PAID', bookingStatus: 'CONFIRMED', paymentId: fresh.paymentId },
+  });
+  if (session) await fresh.save({ session });
+  else await fresh.save();
+  return { confirmed: true, booking: fresh };
+};
+
 const firstPaymentWins = async ({ booking, paymentId, paymentEntity, linkEntity }) => {
   const session = await mongoose.startSession();
   try {
     let result;
-    await session.withTransaction(async () => {
-      // Lock the winning booking row and check it is still eligible.
-      const fresh = await Booking.findOne({ _id: booking._id }).session(session);
-      if (!fresh) {
-        result = { confirmed: false, reason: 'not_found' };
-        return;
-      }
-      if (fresh.bookingStatus === 'CONFIRMED' || fresh.bookingStatus === 'COMPLETED') {
-        result = { confirmed: false, reason: 'already_confirmed' };
-        return;
-      }
-      if (fresh.paymentProcessedId && fresh.paymentProcessedId === paymentId) {
-        result = { confirmed: false, reason: 'already_processed' };
-        return;
-      }
-
-      const winIn = new Date(fresh.checkIn);
-      const winOut = new Date(fresh.checkOut);
-
-      // Cross-check: another booking that overlaps these dates must NOT already
-      // be CONFIRMED. Because this runs inside the transaction's isolation, it
-      // serializes concurrent winners for the same range in most deployments.
-      const existingWinner = await Booking.findOne({
-        _id: { $ne: fresh._id },
-        villa: fresh.villa,
-        bookingStatus: { $in: ['CONFIRMED', 'COMPLETED'] },
-        $or: [{ checkIn: { $lt: winOut }, checkOut: { $gt: winIn } }],
-      }).session(session);
-      if (existingWinner) {
-        result = { confirmed: false, reason: 'dates_taken' };
-        return;
-      }
-
-      // Cancel every overlapping PAYMENT_PENDING booking (this one excluded).
-      const losers = await Booking.find({
-        _id: { $ne: fresh._id },
-        villa: fresh.villa,
-        bookingStatus: 'PAYMENT_PENDING',
-        $or: [{ checkIn: { $lt: winOut }, checkOut: { $gt: winIn } }],
-      }).session(session);
-      for (const b of losers) {
-        b.bookingStatus = 'CANCELLED';
-        b.cancelledBy = 'system';
-        b.cancelledAt = new Date();
-        b.cancellationReason = 'Another customer completed payment for this villa first.';
-        addHistory(b, {
-          actor: 'System',
-          actorType: 'system',
-          action: 'First payment wins',
-          note: 'Cancelled because another booking for the same dates was paid first.',
-          changes: { bookingStatus: 'CANCELLED' },
+    try {
+      await session.withTransaction(async () => {
+        result = await applyWinner({
+          bookingId: booking._id, paymentId, paymentEntity, linkEntity, session,
         });
-        await b.save({ session });
-        await notify({
-          recipientType: 'user',
-          recipient: b.user,
-          type: 'booking_lost_to_payment',
-          reference: b._id,
-          title: 'Dates no longer available',
-          message: 'Someone completed payment for this villa first, so we could not hold your dates. You have not been charged.',
-        });
-      }
-
-      // Confirm the winner.
-      fresh.paymentStatus = 'PAID';
-      fresh.bookingStatus = 'CONFIRMED';
-      fresh.paymentId = (paymentEntity && paymentEntity.id) || linkEntity.id;
-      fresh.paymentMode = 'online';
-      fresh.paymentLink = '';
-      fresh.paymentLinkId = '';
-      fresh.paymentLinkExpiresAt = null;
-      fresh.paymentProcessedId = paymentId;
-      addHistory(fresh, {
-        actor: 'Razorpay',
-        actorType: 'system',
-        action: 'Payment received / Confirmed',
-        note: `Webhook verified. Amount paid: ${fresh.amountPaid || ''}`,
-        changes: { paymentStatus: 'PAID', bookingStatus: 'CONFIRMED', paymentId: fresh.paymentId },
       });
-      await fresh.save({ session });
-      result = { confirmed: true, booking: fresh };
-    });
-    return result || { confirmed: false, reason: 'unknown' };
-  } catch (error) {
-    // Abort transaction on any error so no half-confirm persists.
-    session.abortTransaction();
-    throw error;
+      return result || { confirmed: false, reason: 'unknown' };
+    } catch (txErr) {
+      const unsupported = txErr && (txErr.code === 20 || /replica set member or mongos/.test(String(txErr.message || '')));
+      if (!unsupported) throw txErr;
+      // Single-node MongoDB does not support transactions. Fall back to the
+      // guarded sequential path so confirmations still work locally.
+    }
   } finally {
-    session.endSession();
+    try { await session.endSession(); } catch { /* noop */ }
   }
+  return applyWinner({ bookingId: booking._id, paymentId, paymentEntity, linkEntity });
 };
 
 const razorpayWebhook = async (req, res) => {
@@ -176,14 +196,17 @@ const razorpayWebhook = async (req, res) => {
       const linkId = linkEntity && linkEntity.id;
       const booking = await Booking.findOne({ paymentLinkId: linkId });
       if (booking && booking.paymentStatus !== 'PAID' && booking.bookingStatus !== 'CONFIRMED') {
-        // Release the date hold and let the dates show as available again.
         booking.bookingStatus = 'EXPIRED';
         booking.paymentStatus = eventName === 'payment.failed' ? 'FAILED' : 'LINK_EXPIRED';
         booking.paymentHoldExpiresAt = new Date();
+        if (eventName === 'payment_link.cancelled') {
+          booking.paymentStatus = 'FAILED';
+          booking.cancellationReason = 'Your payment link was deactivated because another customer completed payment for these dates first. You have not been charged.';
+        }
         addHistory(booking, {
           actor: 'Razorpay',
           actorType: 'system',
-          action: 'Payment link expired / failed',
+          action: 'Payment link expired / cancelled / failed',
           note: eventName,
           changes: { bookingStatus: 'EXPIRED', paymentStatus: booking.paymentStatus },
         });
@@ -193,8 +216,8 @@ const razorpayWebhook = async (req, res) => {
           recipient: booking.user,
           type: 'booking_pending_release',
           reference: booking._id,
-          title: 'Payment not completed',
-          message: 'We could not complete payment for your booking, so the dates have been freed. Please rebook or contact us.',
+          title: 'Dates no longer available',
+          message: booking.cancellationReason || 'We could not complete payment for your booking, so the dates have been freed. Please rebook or contact us.',
         });
       }
       return res.status(200).json({ status: 'ok' });
@@ -209,6 +232,9 @@ const razorpayWebhook = async (req, res) => {
 
 const syncBookingFromRazorpay = async (booking) => {
   if (!booking.paymentLinkId) return { booking, live: null };
+  // A booking that already lost the race (expired because the villa was booked
+  // by another customer) must never be re-confirmed, even if its link is paid.
+  if (['EXPIRED', 'CANCELLED'].includes(booking.bookingStatus)) return { booking, live: null };
   let live = null;
   try {
     live = await getPaymentLink(booking.paymentLinkId);
@@ -224,9 +250,16 @@ const syncBookingFromRazorpay = async (booking) => {
       await firstPaymentWins({ booking, linkEntity: { id: paymentId }, paymentEntity: { id: paymentId, amount: live.amount } });
     } else if ((linkStatus === 'expired' || linkStatus === 'cancelled') && booking.paymentStatus !== 'PAID' && booking.bookingStatus !== 'CONFIRMED') {
       booking.bookingStatus = 'EXPIRED';
-      booking.paymentStatus = 'LINK_EXPIRED';
+      booking.paymentStatus = linkStatus === 'cancelled' ? 'FAILED' : 'LINK_EXPIRED';
       booking.paymentHoldExpiresAt = new Date();
-      addHistory(booking, { action: 'Payment link expired', note: linkStatus });
+      if (linkStatus === 'cancelled') {
+        booking.cancellationReason = 'Your payment link was deactivated because another customer completed payment for these dates first. You have not been charged.';
+      }
+      addHistory(booking, {
+        action: 'Payment link expired / cancelled',
+        note: linkStatus,
+        changes: { bookingStatus: 'EXPIRED', paymentStatus: booking.paymentStatus },
+      });
       await booking.save();
     }
   }

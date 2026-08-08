@@ -66,6 +66,12 @@ const createPaymentLink = async (opts) => {
 const getPaymentLink = async (paymentLinkId) => request('GET', `/payment_links/${paymentLinkId}`);
 
 /**
+ * Cancel/deactivate a Razorpay payment link so it can no longer be paid.
+ * Best-effort: a link that was already paid cannot be cancelled.
+ */
+const cancelPaymentLink = async (paymentLinkId) => request('POST', `/payment_links/${paymentLinkId}/cancel`);
+
+/**
  * Verify a Razorpay webhook signature using HMAC-SHA256 of the raw body.
  * @param {string} rawBody raw request body string
  * @param {string} signature  X-Razorpay-Signature header
@@ -85,4 +91,4 @@ const verifyWebhookSignature = (rawBody, signature, secret) => {
   }
 };
 
-module.exports = { isConfigured, isTestMode, setupError, createPaymentLink, getPaymentLink, verifyWebhookSignature };
+module.exports = { isConfigured, isTestMode, setupError, createPaymentLink, getPaymentLink, cancelPaymentLink, verifyWebhookSignature };

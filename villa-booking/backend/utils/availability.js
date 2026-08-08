@@ -42,11 +42,12 @@ const dateRangesOverlap = (aIn, aOut, bIn, bOut) => aIn < bOut && bIn < aOut;
  *
  * - BLOCKED:        admin-blocked via villa.blockedDates
  * - BOOKED:         a CONFIRMED (or COMPLETED) booking overlaps the date
- * - PAYMENT_PENDING: a booking in the payment hold window overlaps (yellow)
+ * - PAYMENT_PENDING: a booking in the payment hold window overlaps (yellow,
+ *                    informational only — these dates remain bookable)
  * - AVAILABLE:       otherwise
  *
- * For one day emitted, a PAYMENT_PENDING booking with an un-expired hold
- * window reserves that date. Expired holds are ignored (treated as available).
+ * PAYMENT_PENDING is NOT exclusive: it never reserves a date. Many customers
+ * may request the same range and the first successful payment wins.
  */
 const buildAvailability = async ({ villa, from, to, now = new Date() }) => {
   const dayMs = daysInRange(from, to);

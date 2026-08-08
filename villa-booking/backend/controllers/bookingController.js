@@ -53,9 +53,9 @@ const createBooking = async (req, res) => {
     const isOverCapacity = guestCount > villa.capacity;
     const extraGuests = isOverCapacity ? guestCount - villa.capacity : 0;
 
-    // Only dates that are not already booked/blocked and not under an active
-    // payment hold are selectable. REQUESTED/UNDER_REVIEW/APPROVED bookings do
-    // NOT hold dates, so they never block whoever pays first.
+    // Only dates that are not already booked or admin-blocked are selectable.
+    // PAYMENT_PENDING bookings do NOT hold dates — many customers may request
+    // the same range and the first successful payment wins.
     const days = Math.ceil((checkOutDate - checkInDate) / (1000 * 60 * 60 * 24));
     const from = checkInDate;
     const to = checkOutDate;
@@ -64,17 +64,13 @@ const createBooking = async (req, res) => {
     for (let i = 0; i < days; i++) {
       const d = new Date(from.getTime() + i * 24 * 60 * 60 * 1000);
       const s = state[dateKey(d)];
-      if (s === 'BOOKED' || s === 'BLOCKED' || s === 'PAYMENT_PENDING') {
+      if (s === 'BOOKED' || s === 'BLOCKED') {
         firstBusy = { date: dateKey(d), state: s };
         break;
       }
     }
     if (firstBusy) {
-      const reason =
-        firstBusy.state === 'PAYMENT_PENDING'
-          ? 'These dates are currently under a pending payment for another customer. Availability is not guaranteed.'
-          : 'This villa is not available for these dates.';
-      return res.status(400).json({ message: reason });
+      return res.status(400).json({ message: 'This villa is not available for these dates.' });
     }
 
     const booking = await Booking.create({

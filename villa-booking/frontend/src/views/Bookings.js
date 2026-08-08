@@ -244,7 +244,7 @@ const BookingsPage = () => {
                           {bstatus === 'PAYMENT_PENDING' && <PaymentCTA booking={booking} onUpdated={refreshBookings} />}
                           {bstatus === 'EXPIRED' && (
                             <p className="mt-3 max-w-sm text-xs text-orange-700 bg-orange-50 border border-orange-200 rounded-xl p-3">
-                              Payment was not completed, so these dates were released. You have not been charged. Please rebook if you still wish to stay.
+                              {booking.cancellationReason || 'Payment was not completed, so these dates were released. You have not been charged. Please rebook if you still wish to stay.'}
                             </p>
                           )}
                           {booking.customPricing?.offerMessage && (

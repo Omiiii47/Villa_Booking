@@ -132,7 +132,7 @@ const bookingSchema = mongoose.Schema(
     rejectedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin' },
     rejectedAt: { type: Date },
     rejectionReason: { type: String },
-    cancelledBy: { type: String, enum: ['customer', 'sales', 'admin'] },
+    cancelledBy: { type: String, enum: ['customer', 'sales', 'admin', 'system'] },
     cancelledAt: { type: Date },
     cancellationReason: { type: String },
 

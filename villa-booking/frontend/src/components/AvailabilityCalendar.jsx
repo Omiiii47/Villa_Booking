@@ -5,7 +5,7 @@ import { getVillaAvailability } from '../services/villaService';
 
 const STATUS = {
   AVAILABLE: { label: 'Available', tooltip: 'Available to book.', color: 'bg-emerald-400 hover:bg-emerald-600', text: 'text-emerald-900', selectable: true },
-  PAYMENT_PENDING: { label: 'Payment in Progress', tooltip: 'Payment in progress. Availability is not guaranteed.', color: 'bg-amber-400', text: 'text-amber-900', selectable: false },
+  PAYMENT_PENDING: { label: 'Payment pending', tooltip: 'Another customer has a payment pending on these dates — they are still bookable. First successful payment wins.', color: 'bg-amber-400 hover:bg-amber-500', text: 'text-amber-900', selectable: true },
   BOOKED: { label: 'Booked', tooltip: 'Booked.', color: 'bg-red-500', text: 'text-red-50', selectable: false },
   BLOCKED: { label: 'Blocked', tooltip: 'Dates are blocked by the property.', color: 'bg-gray-900', text: 'text-gray-300', selectable: false },
   PAST: { label: 'Past', tooltip: 'This date has already passed.', color: 'bg-gray-200', text: 'text-gray-400', selectable: false },
@@ -127,7 +127,7 @@ function AvailabilityCalendar({ villaId, value, onChange, showLegend = true }) {
       {showLegend && (
         <div className="flex flex-wrap items-center gap-3 mb-3">
           <LegendItem color="bg-emerald-400" label="Available" />
-          <LegendItem color="bg-amber-400" label="Payment in Progress" />
+          <LegendItem color="bg-amber-400" label="Payment pending (bookable)" />
           <LegendItem color="bg-red-500" label="Booked" />
           <LegendItem color="bg-gray-900" label="Blocked" />
         </div>
@@ -169,7 +169,7 @@ function AvailabilityCalendar({ villaId, value, onChange, showLegend = true }) {
         })}
       </div>
       <p className="mt-3 text-[11px] text-gray-400">
-        Availability updates in real time. Only one customer can book a date range — first payment wins.
+        Availability updates in real time. Payment-pending dates stay bookable — the first confirmed payment wins.
       </p>
     </div>
   );
