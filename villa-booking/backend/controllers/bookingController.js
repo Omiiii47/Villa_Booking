@@ -187,7 +187,7 @@ const cancelBooking = async (req, res) => {
       return res.status(403).json({ message: 'Not authorized' });
     }
 
-    if (['REQUESTED', 'UNDER_REVIEW', 'APPROVED', 'PAYMENT_PENDING', 'CONFIRMED'].includes(booking.bookingStatus) && booking.bookingStatus !== 'COMPLETED') {
+    if (['REQUESTED', 'UNDER_REVIEW', 'APPROVED', 'PAYMENT_PENDING'].includes(booking.bookingStatus)) {
       // allowed — fall through
     } else {
       return res.status(400).json({

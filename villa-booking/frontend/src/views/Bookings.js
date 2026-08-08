@@ -50,7 +50,7 @@ const paymentLabels = {
   REFUNDED: 'Refunded',
 };
 
-const cancellable = (b) => ['PAYMENT_PENDING', 'CONFIRMED', 'APPROVED'].includes(b.bookingStatus);
+const cancellable = (b) => ['PAYMENT_PENDING', 'APPROVED'].includes(b.bookingStatus);
 
 const formatExpiry = (date, now) => {
   const diff = new Date(date).getTime() - now;
@@ -246,15 +246,6 @@ const BookingsPage = () => {
                             <p className="mt-3 max-w-sm text-xs text-orange-700 bg-orange-50 border border-orange-200 rounded-xl p-3">
                               Payment was not completed, so these dates were released. You have not been charged. Please rebook if you still wish to stay.
                             </p>
-                          )}
-                          {booking.isCustomBooking && (
-                            <div className="mt-3 max-w-sm p-3 rounded-xl bg-orange-50 border border-orange-200">
-                              <p className="text-sm text-orange-800 font-medium mb-1">Custom booking request</p>
-                              <p className="text-xs text-orange-700">
-                                {booking.standardCapacity} guests capacity · {booking.requestedGuests} requested ({booking.extraGuests} extra)
-                                {booking.reviewStatus === 'PENDING' ? ' · Awaiting Sales Team review' : ''}
-                              </p>
-                            </div>
                           )}
                           {booking.customPricing?.offerMessage && (
                             <div className="mt-3 max-w-sm p-3 rounded-xl bg-blue-50 border border-blue-200">
