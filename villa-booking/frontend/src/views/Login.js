@@ -13,13 +13,19 @@ const Login = () => {
   const redirect = searchParams.get('redirect') || '/dashboard';
   const [form, setForm] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
+  const [needsVerification, setNeedsVerification] = useState(false);
   const [show, setShow] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setNeedsVerification(false);
     try { await login(form.email, form.password); router.push(redirect); }
-    catch (err) { setError(err.response?.data?.message || 'Invalid email or password'); }
+    catch (err) {
+      const status = err.response?.status;
+      setNeedsVerification(status === 403 && err.response?.data?.needsVerification);
+      setError(err.response?.data?.message || 'Invalid email or password');
+    }
   };
 
   return (
@@ -41,9 +47,25 @@ const Login = () => {
               <label className="text-xs uppercase tracking-widest text-gray-500 mb-2 block">Password</label>
               <div className="relative"><FaLock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" /><input type={show ? 'text' : 'password'} value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} required className="input-field !pl-12 !pr-12 rounded-2xl" placeholder="••••••••" /><button type="button" onClick={() => setShow(!show)} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-300 hover:text-gray-500">{show ? <FaEyeSlash /> : <FaEye />}</button></div>
             </div>
-            <button type="submit" className="btn-primary w-full text-[10px]"><span>Sign In</span></button>
+<button type="submit" className="btn-primary w-full text-[10px]"><span>Sign In</span></button>
           </form>
-          <p className="text-center text-gray-400 text-sm mt-8">Don't have an account? <Link href="/register" className="text-luxury-accent hover:underline font-medium">Create one</Link></p>
+          <div className="flex flex-col items-center text-center mt-5">
+            {needsVerification && (
+              <Link
+                href="/verify-email"
+                className="text-luxury-accent hover:underline font-medium text-sm text-center"
+              >
+                Your email isn&apos;t verified — click here to verify it
+              </Link>
+            )}
+            <Link
+              href="/forgot-password"
+              className="text-gray-500 hover:text-luxury-black text-sm mt-2 hover:underline"
+            >
+              Forgot your password?
+            </Link>
+          </div>
+          <p className="text-center text-gray-400 text-sm mt-8">Don&apos;t have an account? <Link href="/register" className="text-luxury-accent hover:underline font-medium">Create one</Link></p>
         </div>
       </motion.div>
     </section>

@@ -10,6 +10,15 @@ const userSchema = mongoose.Schema(
     phone: { type: String, required: [true, 'Please add a phone number'] },
     avatar: { type: String, default: '' },
     wishlist: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Villa' }],
+    // Email verification. Only the SHA-256 hash of the token is stored.
+    // Existing accounts created before this feature land default to verified
+    // (see default) so nothing breaks for them.
+    isEmailVerified: { type: Boolean, default: true },
+    emailVerificationTokenHash: { type: String, select: false },
+    emailVerificationExpires: { type: Date, select: false },
+    // Password reset. Hash-only storage; token expires and is single-use.
+    passwordResetTokenHash: { type: String, select: false },
+    passwordResetExpires: { type: Date, select: false },
   },
   { timestamps: true }
 );

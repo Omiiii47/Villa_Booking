@@ -36,3 +36,23 @@ export const getWishlist = async () => {
 export const logout = () => {
   localStorage.removeItem('solscapeUser');
 };
+
+export const verifyEmail = async (token) => {
+  const { data } = await userApi.post('/auth/verify-email', { token });
+  return data;
+};
+
+export const resendVerification = async (email) => {
+  const { data } = await userApi.post('/auth/resend-verification', { email });
+  return data;
+};
+
+export const forgotPassword = async (email) => {
+  const { data } = await userApi.post('/auth/forgot-password', { email });
+  return data;
+};
+
+export const resetPassword = async (token, password) => {
+  const { data } = await userApi.post('/auth/reset-password', { token, password });
+  return data;
+};
