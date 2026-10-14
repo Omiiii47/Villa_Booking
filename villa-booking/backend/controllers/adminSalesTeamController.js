@@ -2,8 +2,15 @@ const Admin = require('../models/Admin');
 
 const listSalesTeam = async (req, res) => {
   try {
-    const staff = await Admin.find({ role: 'sales' }).select('-password').sort({ createdAt: -1 });
-    res.json({ staff });
+    const { page = 1, limit = 10 } = req.query;
+    const query = { role: 'sales' };
+    const total = await Admin.countDocuments(query);
+    const staff = await Admin.find(query)
+      .select('-password')
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(Number(limit));
+    res.json({ staff, total, page: Number(page), pages: Math.ceil(total / limit) });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

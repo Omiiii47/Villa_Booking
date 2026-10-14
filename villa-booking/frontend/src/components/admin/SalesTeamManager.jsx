@@ -2,20 +2,35 @@
 import { useState, useEffect, useCallback } from 'react';
 import { FaPlus, FaTrash } from 'react-icons/fa';
 import * as adminService from '../../services/adminService';
+import Pagination from '../Pagination';
+
+const PAGE_SIZE = 10;
 
 const SalesTeamManager = () => {
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [pages, setPages] = useState(1);
+  const [total, setTotal] = useState(0);
   const [form, setForm] = useState({ name: '', email: '', password: '' });
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState('');
 
   const fetchMembers = useCallback(async () => {
     setLoading(true);
-    try { const data = await adminService.getSalesTeam(); setMembers(data.staff || []); }
+    try {
+      const data = await adminService.getSalesTeam({ page, limit: PAGE_SIZE });
+      if (!data.staff?.length && page > 1) {
+        setPage(Math.max(1, data.pages || 1));
+      } else {
+        setMembers(data.staff || []);
+        setPages(data.pages || 1);
+        setTotal(data.total || data.staff?.length || 0);
+      }
+    }
     catch { setMembers([]); }
     setLoading(false);
-  }, []);
+  }, [page]);
 
   useEffect(() => { const t = setTimeout(() => fetchMembers(), 300); return () => clearTimeout(t); }, [fetchMembers]);
 
@@ -88,6 +103,7 @@ const SalesTeamManager = () => {
                 ))}
               </tbody>
             </table>
+            <Pagination page={page} pages={pages} total={total} limit={PAGE_SIZE} onPage={setPage} />
           </div>
         )}
       </div>

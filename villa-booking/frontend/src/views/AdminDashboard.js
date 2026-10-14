@@ -6,30 +6,39 @@ import * as adminService from '../services/adminService';
 import LandingCmsEditor from '../components/admin/LandingCmsEditor';
 import VillaManager from '../components/admin/VillaManager';
 import SalesTeamManager from '../components/admin/SalesTeamManager';
+import Pagination from '../components/Pagination';
+
+const PAGE_SIZE = 10;
 
 const AdminDashboard = () => {
   const { admin, logout } = useAdminAuth();
   const [tab, setTab] = useState('villas');
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [pages, setPages] = useState(1);
+  const [total, setTotal] = useState(0);
 
   const fetchData = useCallback(async () => {
+    if (tab !== 'users') return;
     setLoading(true);
     try {
-      let data;
-      switch (tab) {
-        case 'villas': data = await adminService.getVillas({ limit: 50 }); setItems(data.villas); break;
-        case 'users': data = await adminService.getUsers(); setItems(data.users); break;
-        default: setItems([]);
+      const data = await adminService.getUsers({ page, limit: PAGE_SIZE });
+      if (!data.users.length && page > 1) {
+        setPage(Math.max(1, data.pages || 1));
+      } else {
+        setItems(data.users);
+        setPages(data.pages || 1);
+        setTotal(data.total || data.users.length);
       }
     } catch { setItems([]); }
     setLoading(false);
-  }, [tab]);
+  }, [tab, page]);
 
   useEffect(() => {
     if (!admin) return;
     fetchData();
-  }, [admin, tab, fetchData]);
+  }, [admin, tab, page, fetchData]);
 
   const handleDelete = async (id, type) => {
     if (!window.confirm('Are you sure?')) return;
@@ -67,7 +76,7 @@ const AdminDashboard = () => {
 
         <div className="flex gap-2 mb-8 overflow-x-auto">
           {tabs.map((t) => (
-            <button key={t.id} onClick={() => setTab(t.id)}
+            <button key={t.id} onClick={() => { setTab(t.id); setPage(1); }}
               className={`flex items-center gap-2 px-6 py-3 rounded-xl text-sm transition-all whitespace-nowrap ${
                 tab === t.id ? 'bg-luxury-accent text-white' : 'bg-luxury-cream text-gray-600 hover:bg-gray-200'
               }`}
@@ -112,6 +121,7 @@ const AdminDashboard = () => {
               </table>
               {items.length === 0 && <p className="text-center text-gray-400 py-10">No users found.</p>}
             </div>
+            <Pagination page={page} pages={pages} total={total} limit={PAGE_SIZE} onPage={setPage} />
           </div>
         )}
       </div>

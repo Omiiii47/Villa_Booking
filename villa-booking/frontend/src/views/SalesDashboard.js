@@ -11,6 +11,9 @@ import * as salesService from '../services/salesService';
 import { getVillas } from '../services/villaService';
 import SalesBookingReview from '../components/sales/SalesBookingReview';
 import SalesCustomBooking from '../components/sales/SalesCustomBooking';
+import Pagination from '../components/Pagination';
+
+const PAGE_SIZE = 20;
 
 const reviewStyles = {
   PENDING: 'bg-yellow-100 text-yellow-700',
@@ -71,6 +74,9 @@ const SalesDashboard = () => {
   const [reviewFilter, setReviewFilter] = useState(searchParams.get('review') || '');
   const [bookingFilter, setBookingFilter] = useState(searchParams.get('booking') || '');
   const [search, setSearch] = useState('');
+  const [page, setPage] = useState(1);
+  const [pages, setPages] = useState(1);
+  const [total, setTotal] = useState(0);
   const [reviewing, setReviewing] = useState(null);
   const [showCreate, setShowCreate] = useState(false);
   const [notifications, setNotifications] = useState([]);
@@ -79,15 +85,21 @@ const SalesDashboard = () => {
   const fetchBookings = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
     try {
-      const params = { limit: 100 };
+      const params = { page, limit: PAGE_SIZE };
       if (reviewFilter) params.review = reviewFilter;
       if (bookingFilter) params.booking = bookingFilter;
       if (search.trim()) params.search = search.trim();
       const data = await salesService.getBookings(params);
-      setBookings(data.bookings);
+      if (!data.bookings.length && page > 1) {
+        setPage(Math.max(1, data.pages || 1));
+      } else {
+        setBookings(data.bookings);
+        setPages(data.pages || 1);
+        setTotal(data.total || data.bookings.length);
+      }
     } catch { setBookings([]); }
     if (!silent) setLoading(false);
-  }, [reviewFilter, bookingFilter, search]);
+  }, [page, reviewFilter, bookingFilter, search]);
 
   const loadStats = useCallback(async () => {
     try { setStats(await salesService.getDashboardStats()); } catch { setStats(null); }
@@ -166,7 +178,14 @@ const SalesDashboard = () => {
                   {notifications.length === 0 ? (
                     <p className="text-sm text-gray-400 p-4">No notifications.</p>
                   ) : notifications.map((n) => (
-                    <button key={n._id} onClick={() => { setShowNotifs(false); const ref = n.reference?._id; if (ref && bookings.some((b) => b._id === ref)) setReviewing(bookings.find((b) => b._id === ref)); }}
+                    <button key={n._id} onClick={() => {
+                      setShowNotifs(false);
+                      const ref = n.reference?._id;
+                      if (!ref) return;
+                      const found = bookings.find((b) => b._id === ref);
+                      if (found) setReviewing(found);
+                      else salesService.getBooking(ref).then(setReviewing).catch(() => {});
+                    }}
                       className={`w-full text-left p-4 border-b border-gray-50 hover:bg-gray-50 ${n.read ? 'opacity-70' : ''}`}>
                       <div className="text-sm font-medium">{n.title}</div>
                       <div className="text-xs text-gray-500 mt-0.5">{n.message}</div>
@@ -191,7 +210,7 @@ const SalesDashboard = () => {
           <div className="flex flex-col md:flex-row md:items-center gap-3">
             <div className="flex gap-2 overflow-x-auto flex-1">
               {reviewFilters.map((fl) => (
-                <button key={fl.id || 'all-review'} onClick={() => setReviewFilter(fl.id)}
+                <button key={fl.id || 'all-review'} onClick={() => { setReviewFilter(fl.id); setPage(1); }}
                   className={`px-4 py-2 rounded-xl text-sm transition-all whitespace-nowrap ${reviewFilter === fl.id ? 'bg-luxury-accent text-white' : 'bg-luxury-cream text-gray-600 hover:bg-gray-200'}`}>
                   {fl.label}
                 </button>
@@ -199,13 +218,13 @@ const SalesDashboard = () => {
             </div>
             <div className="relative md:w-72">
               <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" />
-              <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search customer..."
+              <input value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} placeholder="Search customer..."
                 className="input-field !pl-11 rounded-xl w-full" />
             </div>
           </div>
           <div className="flex gap-2 overflow-x-auto">
             {bookingFilters.map((fl) => (
-              <button key={fl.id || 'all-booking'} onClick={() => setBookingFilter(fl.id)}
+              <button key={fl.id || 'all-booking'} onClick={() => { setBookingFilter(fl.id); setPage(1); }}
                 className={`px-4 py-2 rounded-xl text-xs transition-all whitespace-nowrap ${bookingFilter === fl.id ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
                 {fl.label}
               </button>
@@ -281,6 +300,7 @@ const SalesDashboard = () => {
                 </tbody>
               </table>
             </div>
+            <Pagination page={page} pages={pages} total={total} limit={PAGE_SIZE} onPage={setPage} />
           </div>
         )}
       </div>

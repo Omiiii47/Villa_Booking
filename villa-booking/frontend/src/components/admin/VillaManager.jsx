@@ -2,6 +2,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { FaPlus, FaTrash, FaEdit, FaChevronUp, FaChevronDown, FaTimes, FaImages } from 'react-icons/fa';
 import * as adminService from '../../services/adminService';
+import Pagination from '../Pagination';
+
+const PAGE_SIZE = 10;
 
 const emptyForm = {
   name: '', shortDescription: '', description: '', pricePerNight: '', capacity: 2, bedrooms: 1,
@@ -12,6 +15,9 @@ const emptyForm = {
 const VillaManager = () => {
   const [villas, setVillas] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [pages, setPages] = useState(1);
+  const [total, setTotal] = useState(0);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(emptyForm);
   const [showForm, setShowForm] = useState(false);
@@ -22,11 +28,17 @@ const VillaManager = () => {
   const fetchVillas = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await adminService.getVillas({ limit: 200, sort: 'order' });
-      setVillas(data.villas);
+      const data = await adminService.getVillas({ page, limit: PAGE_SIZE, sort: 'order' });
+      if (!data.villas.length && page > 1) {
+        setPage(Math.max(1, data.pages || 1));
+      } else {
+        setVillas(data.villas);
+        setPages(data.pages || 1);
+        setTotal(data.total || data.villas.length);
+      }
     } catch { setVillas([]); }
     setLoading(false);
-  }, []);
+  }, [page]);
 
   useEffect(() => { const t = setTimeout(() => fetchVillas(), 300); return () => clearTimeout(t); }, [fetchVillas]);
 
@@ -75,11 +87,20 @@ const VillaManager = () => {
   };
 
   const move = async (index, dir) => {
-    const target = index + dir;
-    if (target < 0 || target >= villas.length) return;
     const ordered = [...villas].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
     const cur = ordered[index];
-    const swap = ordered[target];
+    let swap = ordered[index + dir];
+    if (!swap) {
+      if (dir > 0 && page < pages) {
+        const next = await adminService.getVillas({ page: page + 1, limit: 1, sort: 'order' });
+        swap = next.villas?.[0];
+      } else if (dir < 0 && page > 1) {
+        const prev = await adminService.getVillas({ page: page - 1, limit: PAGE_SIZE, sort: 'order' });
+        swap = prev.villas?.[prev.villas.length - 1];
+      }
+      if (!swap) return;
+    }
+    if (swap._id === cur._id) return;
     try {
       await adminService.updateVilla(cur._id, { order: swap.order ?? cur.order });
       await adminService.updateVilla(swap._id, { order: cur.order ?? swap.order });
@@ -128,7 +149,7 @@ const VillaManager = () => {
   return (
     <>
       <div className="flex items-center justify-between mb-6">
-        <p className="text-sm text-gray-500">{ordered.length} villas · slugs auto-generate from the name</p>
+        <p className="text-sm text-gray-500">{total} villas · slugs auto-generate from the name</p>
         <button onClick={openNew} className="btn-primary text-[10px]"><FaPlus /> <span>Add Villa</span></button>
       </div>
 
@@ -151,8 +172,8 @@ const VillaManager = () => {
                 <tr key={v._id} className="border-t border-gray-100 hover:bg-gray-50">
                   <td className="p-4">
                     <div className="flex flex-col gap-1">
-                      <button onClick={() => move(i, -1)} disabled={i === 0} className="text-gray-300 hover:text-luxury-accent disabled:opacity-30"><FaChevronUp /></button>
-                      <button onClick={() => move(i, 1)} disabled={i === ordered.length - 1} className="text-gray-300 hover:text-luxury-accent disabled:opacity-30"><FaChevronDown /></button>
+                      <button onClick={() => move(i, -1)} disabled={i === 0 && page === 1} className="text-gray-300 hover:text-luxury-accent disabled:opacity-30"><FaChevronUp /></button>
+                      <button onClick={() => move(i, 1)} disabled={i === ordered.length - 1 && page === pages} className="text-gray-300 hover:text-luxury-accent disabled:opacity-30"><FaChevronDown /></button>
                     </div>
                   </td>
                   <td className="p-4">
@@ -192,6 +213,7 @@ const VillaManager = () => {
           </table>
           {!loading && ordered.length === 0 && <p className="text-center text-gray-400 py-10">No villas yet. Add your first villa.</p>}
         </div>
+        <Pagination page={page} pages={pages} total={total} limit={PAGE_SIZE} onPage={setPage} />
       </div>
 
       {showForm && (

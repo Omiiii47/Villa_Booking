@@ -25,8 +25,8 @@ export const uploadImages = async (formData) => {
   return data;
 };
 
-export const getSalesTeam = async () => {
-  const { data } = await adminApi.get('/admin/sales-team');
+export const getSalesTeam = async (params = {}) => {
+  const { data } = await adminApi.get('/admin/sales-team', { params });
   return data;
 };
 
