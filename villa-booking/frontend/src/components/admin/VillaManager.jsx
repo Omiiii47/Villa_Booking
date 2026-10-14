@@ -164,7 +164,7 @@ const VillaManager = () => {
                       </div>
                     </div>
                   </td>
-                  <td className="p-4">${v.pricePerNight}</td>
+                  <td className="p-4">₹{v.pricePerNight}</td>
                   <td className="p-4 text-gray-500">{v.location}</td>
                   <td className="p-4">{v.rating} ({v.numReviews})</td>
                   <td className="p-4">

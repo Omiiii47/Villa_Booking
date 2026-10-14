@@ -71,7 +71,7 @@ const VillaCard = ({ villa, i }) => {
       >
         <h3 className="font-display text-xl text-white mb-1">{villa.name}</h3>
         <p className="text-white/60 text-xs mb-1 line-clamp-2">{villa.desc}</p>
-        <p className="text-luxury-accent text-xs mb-4">From {villa.price} / night</p>
+        <p className="text-luxury-accent text-xs mb-4">From {String(villa.price || '').replace(/\$/g, '₹')} / night</p>
         <div className="flex gap-2">
           <Link href={`/villas/${villa.slug}?book=1`}
             className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-luxury-accent text-white text-[10px] uppercase tracking-[0.15em] transition-all hover:bg-luxury-accent/90">

@@ -91,12 +91,12 @@ const PaymentCTA = ({ booking, onUpdated }) => {
           <FaCheckCircle className="text-emerald-600" /> Payment Successful — Booking Confirmed
         </p>
         {booking.amountPaid != null && (
-          <p className="font-display text-xl text-emerald-700">${Number(booking.amountPaid).toLocaleString()}</p>
+          <p className="font-display text-xl text-emerald-700">₹{Number(booking.amountPaid).toLocaleString()}</p>
         )}
         <div className="mt-2 text-xs text-emerald-800 space-y-0.5">
           {booking.paymentId && <p>Payment ID: <span className="font-mono">{booking.paymentId}</span></p>}
           {booking.paymentDate && <p>Paid on: {new Date(booking.paymentDate).toLocaleString()}</p>}
-          {booking.paymentId && <p>Amount: ${Number(booking.amountPaid ?? amount ?? 0).toLocaleString()}</p>}
+          {booking.paymentId && <p>Amount: ₹{Number(booking.amountPaid ?? amount ?? 0).toLocaleString()}</p>}
         </div>
       </div>
     );
@@ -110,7 +110,7 @@ const PaymentCTA = ({ booking, onUpdated }) => {
   return (
     <div className={`mt-3 max-w-sm p-4 rounded-xl border ${expired ? 'bg-gray-50 border-gray-300' : 'bg-emerald-50 border-emerald-200'}`}>
       <p className="text-sm font-medium text-emerald-800 mb-1">Final Amount Due</p>
-      <p className="font-display text-2xl text-emerald-700">${Number(amount || 0).toLocaleString()}</p>
+      <p className="font-display text-2xl text-emerald-700">₹{Number(amount || 0).toLocaleString()}</p>
 
       {booking.paymentLinkExpiresAt && (
         <p className={`mt-2 text-xs font-medium flex items-center gap-1 ${expired ? 'text-red-600' : 'text-amber-700'}`}>
@@ -238,9 +238,9 @@ const BookingsPage = () => {
                             <span>Check-out: {new Date(booking.checkOut).toLocaleDateString()}</span>
                             <span>{booking.guests} guests{booking.adults ? ` (${booking.adults} adults${booking.kids ? ` · ${booking.kids} children` : ''}${booking.infants ? ` · ${booking.infants} infants` : ''}${booking.pets ? ` · ${booking.pets} pets` : ''})` : ''}</span>
                           </div>
-                          <p className="font-display text-xl mt-3">
-                            ${(booking.finalPrice ?? booking.quotedPrice ?? booking.customPricing?.totalAmount ?? booking.totalPrice)?.toLocaleString()}
-                          </p>
+                           <p className="font-display text-xl mt-3">
+                             ₹{(booking.finalPrice ?? booking.quotedPrice ?? booking.customPricing?.totalAmount ?? booking.totalPrice)?.toLocaleString()}
+                           </p>
                           {bstatus === 'PAYMENT_PENDING' && <PaymentCTA booking={booking} onUpdated={refreshBookings} />}
                           {bstatus === 'EXPIRED' && (
                             <p className="mt-3 max-w-sm text-xs text-orange-700 bg-orange-50 border border-orange-200 rounded-xl p-3">
@@ -252,7 +252,7 @@ const BookingsPage = () => {
                               <p className="text-sm text-blue-800 font-medium mb-1">Your booking offer</p>
                               <p className="text-xs text-blue-700">{booking.customPricing.offerMessage}</p>
                               {booking.customPricing.totalAmount > 0 && (
-                                <p className="text-sm font-medium text-blue-800 mt-2">Total offer: ${booking.customPricing.totalAmount.toLocaleString()}</p>
+                                <p className="text-sm font-medium text-blue-800 mt-2">Total offer: ₹{booking.customPricing.totalAmount.toLocaleString()}</p>
                               )}
                             </div>
                           )}

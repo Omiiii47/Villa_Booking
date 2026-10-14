@@ -162,13 +162,13 @@ useEffect(() => {
 <div><h3 className="font-display text-lg">{villa?.name}</h3><p className="text-gray-400 text-sm">{villa?.location}</p></div>
                 </div>
                 <div className="space-y-3 mb-6 pb-6 border-b border-gray-100">
-                  {[{ label: `$${villa?.pricePerNight} x ${nights()} nights`, value: `$${(villa?.pricePerNight || 0) * nights()}` },
-                    { label: 'Service fee', value: `$${Math.round(total() * 0.1)}` },
-                    { label: 'Tax', value: `$${Math.round(total() * 0.08)}` },
+                  {[{ label: `₹${villa?.pricePerNight} x ${nights()} nights`, value: `₹${(villa?.pricePerNight || 0) * nights()}` },
+                    { label: 'Service fee', value: `₹${Math.round(total() * 0.1)}` },
+                    { label: 'Tax', value: `₹${Math.round(total() * 0.08)}` },
                   ].map((item) => (
                     <div key={item.label} className="flex justify-between text-sm"><span className="text-gray-500">{item.label}</span><span>{item.value}</span></div>
                   ))}
-                  <div className="flex justify-between font-display text-lg pt-2"><span>Estimated total</span><span className="text-luxury-accent">${(total() + Math.round(total() * 0.18)).toLocaleString()}</span></div>
+                  <div className="flex justify-between font-display text-lg pt-2"><span>Estimated total</span><span className="text-luxury-accent">₹{(total() + Math.round(total() * 0.18)).toLocaleString()}</span></div>
                   {isOverCapacity && (
                     <p className="text-xs text-orange-600 bg-orange-50 border border-orange-200 rounded-xl p-3">
                       Your group size ({totalGuests} guests) exceeds the {capacity}-guest capacity. Final nightly rate and charges will be confirmed by our Sales Team in your personalized offer.
@@ -178,7 +178,7 @@ useEffect(() => {
                     Estimate only. Submitting this request is <span className="font-medium text-luxury-accent">free</span> — final pricing will be confirmed by our Sales Team in your personalized offer.
                   </p>
                 </div>
-                <div className="flex justify-between font-display text-xl"><span>Total due now</span><span className="text-luxury-accent">$0</span></div>
+                <div className="flex justify-between font-display text-xl"><span>Total due now</span><span className="text-luxury-accent">₹0</span></div>
               </div>
             </motion.div>
           </div>

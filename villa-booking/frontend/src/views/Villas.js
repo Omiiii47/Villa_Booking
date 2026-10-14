@@ -78,8 +78,8 @@ const Villas = () => {
                 transition={{ duration: 0.3 }} className="overflow-hidden">
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10 p-7 bg-luxury-cream rounded-3xl">
                   {[
-                    { label: 'Min Price', placeholder: '$0', key: 'minPrice', type: 'number' },
-                    { label: 'Max Price', placeholder: '$10000', key: 'maxPrice', type: 'number' },
+                    { label: 'Min Price', placeholder: '₹0', key: 'minPrice', type: 'number' },
+                    { label: 'Max Price', placeholder: '₹10000', key: 'maxPrice', type: 'number' },
                   ].map((f) => (
                     <div key={f.key}>
                       <label className="text-xs uppercase tracking-widest text-gray-500 mb-2 block">{f.label}</label>

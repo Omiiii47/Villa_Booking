@@ -149,7 +149,7 @@ const SalesCustomBooking = ({ villas, onClose, onSaved }) => {
           <div>
             <h4 className="font-medium mb-3">Villa, Dates &amp; Guests</h4>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div><label className="block text-xs font-medium text-gray-600 mb-1">Villa *</label><select value={f.villa} onChange={handleVillaChange} className="input-field rounded-xl w-full">{villas.map((v) => <option key={v._id} value={v._id}>{v.name} (${v.pricePerNight}/night)</option>)}</select></div>
+              <div><label className="block text-xs font-medium text-gray-600 mb-1">Villa *</label><select value={f.villa} onChange={handleVillaChange} className="input-field rounded-xl w-full">{villas.map((v) => <option key={v._id} value={v._id}>{v.name} (₹{v.pricePerNight}/night)</option>)}</select></div>
               <div><label className="block text-xs font-medium text-gray-600 mb-1">Check-in *</label><input type="date" value={f.checkIn} onChange={set('checkIn')} className="input-field rounded-xl w-full" /></div>
               <div><label className="block text-xs font-medium text-gray-600 mb-1">Check-out *</label><input type="date" value={f.checkOut} onChange={set('checkOut')} className="input-field rounded-xl w-full" /></div>
               <div><label className="block text-xs font-medium text-gray-600 mb-1">Adults</label><input type="number" min="1" value={f.adults} onChange={set('adults')} className="input-field rounded-xl w-full" /></div>

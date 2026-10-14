@@ -22,17 +22,17 @@ const SHOWCASE_ITEMS = [
   {
     name: 'The Grand Horizon', slug: 'the-grand-horizon',
     image: img(''),
-    tag: 'Oceanfront', price: '$2,500', desc: 'A breathtaking cliffside retreat with panoramic ocean views',
+    tag: 'Oceanfront', price: '₹2,500', desc: 'A breathtaking cliffside retreat with panoramic ocean views',
   },
   {
     name: 'Azure Cove Villa', slug: 'azure-cove-villa',
     image: img(''),
-    tag: 'Beachfront', price: '$3,200', desc: 'Private beachfront paradise with crystalline waters',
+    tag: 'Beachfront', price: '₹3,200', desc: 'Private beachfront paradise with crystalline waters',
   },
   {
     name: 'The Emerald Canopy', slug: 'the-emerald-canopy',
     image: img(''),
-    tag: 'Rainforest', price: '$1,800', desc: 'A treetop sanctuary immersed in ancient rainforest',
+    tag: 'Rainforest', price: '₹1,800', desc: 'A treetop sanctuary immersed in ancient rainforest',
   },
 ];
 

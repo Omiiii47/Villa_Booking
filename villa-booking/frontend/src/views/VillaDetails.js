@@ -209,7 +209,7 @@ fetch();
               <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }} className="sticky top-28" id="villa-booking">
                 <div className="card-premium p-8">
                   <div className="mb-6">
-                    <span className="font-display text-4xl text-luxury-black">${villa.pricePerNight}</span>
+                    <span className="font-display text-4xl text-luxury-black">₹{villa.pricePerNight}</span>
                     <span className="text-gray-400"> / night</span>
                   </div>
                   {user ? (

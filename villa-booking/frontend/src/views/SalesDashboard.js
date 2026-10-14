@@ -48,7 +48,7 @@ const bookingFilters = [
   { id: 'COMPLETED', label: 'Completed' },
 ];
 
-const fmtMoney = (v) => `$${Number(v || 0).toLocaleString()}`;
+const fmtMoney = (v) => `₹${Number(v || 0).toLocaleString()}`;
 const fmtDateTime = (d) => (d ? new Date(d).toLocaleString() : '');
 
 const StatCard = ({ icon: Icon, label, value, tone = 'text-luxury-black' }) => (
@@ -260,7 +260,7 @@ const SalesDashboard = () => {
                           </div>
                         </td>
                         <td className="p-4">
-                          <span>${(b.finalPrice ?? b.quotedPrice ?? b.totalPrice)?.toLocaleString()}</span>
+                          <span>₹{(b.finalPrice ?? b.quotedPrice ?? b.totalPrice)?.toLocaleString()}</span>
                           {b.offerSent && <div className="text-[10px] text-blue-500 mt-0.5">Offer sent</div>}
                         </td>
                         <td className="p-4">

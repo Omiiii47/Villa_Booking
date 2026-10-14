@@ -95,7 +95,7 @@ const VillaCard = ({ villa, index = 0 }) => {
                 {villa.name}
               </h3>
               <span className="font-display text-lg text-luxury-accent whitespace-nowrap ml-4">
-                ${villa.pricePerNight}
+                ₹{villa.pricePerNight}
                 <span className="font-body text-xs text-gray-400 font-normal">/nt</span>
               </span>
             </div>

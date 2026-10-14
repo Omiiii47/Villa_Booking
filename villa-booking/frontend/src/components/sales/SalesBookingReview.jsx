@@ -210,7 +210,7 @@ const SalesBookingReview = ({ booking, villas, onClose, onSaved }) => {
     { label: 'Nights', value: booking.nights },
     { label: 'Guests', value: `${booking.guests} (${booking.adults}A${booking.kids ? `/${booking.kids}C` : ''}${booking.infants ? `/${booking.infants}I` : ''}${booking.pets ? `/${booking.pets}P` : ''})` },
     { label: 'Booking Date', value: fmtDate(booking.createdAt) },
-    { label: 'Estimated', value: `$${(booking.estimatedPrice ?? booking.totalPrice)?.toLocaleString()}` },
+    { label: 'Estimated', value: `₹${(booking.estimatedPrice ?? booking.totalPrice)?.toLocaleString()}` },
   ];
 
   const actions = [];
@@ -319,8 +319,8 @@ const SalesBookingReview = ({ booking, villas, onClose, onSaved }) => {
 
           {reviewStatus === 'APPROVED' && (
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 rounded-2xl bg-green-50 border border-green-200 p-4">
-              <div><div className="text-xs uppercase tracking-widest text-gray-500">Quoted Price</div><div className="font-display text-xl text-green-700">${(booking.quotedPrice ?? booking.customPricing?.totalAmount ?? 0).toLocaleString()}</div></div>
-              <div><div className="text-xs uppercase tracking-widest text-gray-500">Final Price</div><div className="font-display text-xl text-green-700">${(booking.finalPrice ?? booking.quotedPrice ?? 0).toLocaleString()}</div></div>
+               <div><div className="text-xs uppercase tracking-widest text-gray-500">Quoted Price</div><div className="font-display text-xl text-green-700">₹{(booking.quotedPrice ?? booking.customPricing?.totalAmount ?? 0).toLocaleString()}</div></div>
+               <div><div className="text-xs uppercase tracking-widest text-gray-500">Final Price</div><div className="font-display text-xl text-green-700">₹{(booking.finalPrice ?? booking.quotedPrice ?? 0).toLocaleString()}</div></div>
               <div><div className="text-xs uppercase tracking-widest text-gray-500">Approved By</div><div className="font-medium text-sm mt-1">{booking.approvedBy?.name || '—'}<div className="text-xs text-gray-500">{fmtDateTime(booking.approvedAt)}</div></div></div>
             </div>
           )}
@@ -362,8 +362,8 @@ const SalesBookingReview = ({ booking, villas, onClose, onSaved }) => {
                 <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
                   <div><div className="text-xs uppercase tracking-widest text-gray-500">Payment Status</div><div className="font-medium">{paymentDetails.paymentStatus}</div></div>
                   <div><div className="text-xs uppercase tracking-widest text-gray-500">Booking Status</div><div className="font-medium">{paymentDetails.bookingStatus}</div></div>
-                  <div><div className="text-xs uppercase tracking-widest text-gray-500">Amount</div><div className="font-medium">${Number(paymentDetails.amount || 0).toLocaleString()}</div></div>
-                  <div><div className="text-xs uppercase tracking-widest text-gray-500">Amount Paid</div><div className="font-medium">${Number(paymentDetails.amountPaid || 0).toLocaleString()}</div></div>
+                   <div><div className="text-xs uppercase tracking-widest text-gray-500">Amount</div><div className="font-medium">₹{Number(paymentDetails.amount || 0).toLocaleString()}</div></div>
+                   <div><div className="text-xs uppercase tracking-widest text-gray-500">Amount Paid</div><div className="font-medium">₹{Number(paymentDetails.amountPaid || 0).toLocaleString()}</div></div>
                   {paymentDetails.paymentId && (
                     <div className="col-span-2"><div className="text-xs uppercase tracking-widest text-gray-500">Payment ID</div><div className="font-mono text-xs">{paymentDetails.paymentId}</div></div>
                   )}
@@ -384,7 +384,7 @@ const SalesBookingReview = ({ booking, villas, onClose, onSaved }) => {
                       {paymentHistory.map((h, i) => (
                         <li key={i} className="flex items-center justify-between gap-2 text-xs bg-white border border-blue-100 rounded-xl px-3 py-2">
                           <div>
-                            <span className="font-medium">{h.source}</span> · ${Number(h.amount || 0).toLocaleString()} · <span className="uppercase">{h.status}</span>
+                             <span className="font-medium">{h.source}</span> · ₹{Number(h.amount || 0).toLocaleString()} · <span className="uppercase">{h.status}</span>
                             <div className="text-gray-400 mt-0.5">created {fmtDateTime(h.createdAt)} · expires {fmtDateTime(h.expiresAt)}</div>
                           </div>
                           {h.url && <a href={h.url} target="_blank" rel="noreferrer" className="text-blue-600 underline whitespace-nowrap">Open</a>}

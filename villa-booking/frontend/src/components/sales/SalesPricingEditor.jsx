@@ -67,8 +67,8 @@ const SalesPricingEditor = ({ pricing, onChange, nights }) => {
       </div>
       <textarea value={pricing.complimentaryServices} onChange={(e) => onChange('complimentaryServices', e.target.value)} rows={2} className="input-field rounded-xl w-full mt-3 resize-none" placeholder="Complimentary services (e.g. welcome hamper, late checkout)" />
       <div className="mt-4 p-4 rounded-2xl bg-luxury-cream">
-        <div className="flex justify-between text-sm"><span>Total Offer / Night</span><span className="font-display text-lg">${num(totalPerNight).toLocaleString()}</span></div>
-        <div className="flex justify-between text-sm mt-1"><span>Total ({nights} nights)</span><span className="font-display text-lg text-luxury-accent">${num(totalAmount).toLocaleString()}</span></div>
+        <div className="flex justify-between text-sm"><span>Total Offer / Night</span><span className="font-display text-lg">₹{num(totalPerNight).toLocaleString()}</span></div>
+        <div className="flex justify-between text-sm mt-1"><span>Total ({nights} nights)</span><span className="font-display text-lg text-luxury-accent">₹{num(totalAmount).toLocaleString()}</span></div>
       </div>
     </div>
   );
