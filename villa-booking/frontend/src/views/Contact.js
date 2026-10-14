@@ -2,12 +2,27 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { FaMapMarkerAlt, FaPhone, FaEnvelope, FaClock, FaPaperPlane } from 'react-icons/fa';
+import { submitContact } from '../services/contactService';
 
 const Contact = () => {
   const [form, setForm] = useState({ name: '', email: '', subject: '', message: '' });
   const [sent, setSent] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleSubmit = (e) => { e.preventDefault(); setSent(true); setForm({ name: '', email: '', subject: '', message: '' }); };
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSubmitting(true);
+    setError('');
+    try {
+      await submitContact(form);
+      setSent(true);
+      setForm({ name: '', email: '', subject: '', message: '' });
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to send message. Please try again.');
+    }
+    setSubmitting(false);
+  };
 
   return (
     <>
@@ -33,13 +48,14 @@ const Contact = () => {
                 </motion.div>
               ) : (
                 <form onSubmit={handleSubmit} className="space-y-5">
+                  {error && <div className="bg-red-50 text-red-500 text-sm p-3 rounded-xl">⚠ {error}</div>}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div><label className="text-xs uppercase tracking-widest text-gray-500 mb-2 block">Name</label><input type="text" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required className="input-field rounded-2xl" placeholder="Your name" /></div>
                     <div><label className="text-xs uppercase tracking-widest text-gray-500 mb-2 block">Email</label><input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required className="input-field rounded-2xl" placeholder="your@email.com" /></div>
                   </div>
                   <div><label className="text-xs uppercase tracking-widest text-gray-500 mb-2 block">Subject</label><input type="text" value={form.subject} onChange={(e) => setForm({ ...form, subject: e.target.value })} className="input-field rounded-2xl" placeholder="How can we help?" /></div>
                   <div><label className="text-xs uppercase tracking-widest text-gray-500 mb-2 block">Message</label><textarea value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} required rows={6} className="input-field rounded-2xl resize-none" placeholder="Tell us about your dream villa experience..." /></div>
-                  <button type="submit" className="btn-primary text-[10px]"><span>Send Message</span></button>
+                  <button type="submit" disabled={submitting} className="btn-primary text-[10px]"><span>{submitting ? 'Sending...' : 'Send Message'}</span></button>
                 </form>
               )}
             </div>

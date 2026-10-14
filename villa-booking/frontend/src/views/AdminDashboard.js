@@ -1,11 +1,12 @@
 ﻿'use client'
 import { useState, useEffect, useCallback } from 'react';
-import { FaHome, FaUsers, FaSignOutAlt, FaTrash, FaImage, FaHandshake } from 'react-icons/fa';
+import { FaHome, FaUsers, FaSignOutAlt, FaTrash, FaImage, FaHandshake, FaEnvelope } from 'react-icons/fa';
 import { useAdminAuth } from '../context/AdminAuthContext';
 import * as adminService from '../services/adminService';
 import LandingCmsEditor from '../components/admin/LandingCmsEditor';
 import VillaManager from '../components/admin/VillaManager';
 import SalesTeamManager from '../components/admin/SalesTeamManager';
+import ContactMessages from '../components/admin/ContactMessages';
 import Pagination from '../components/Pagination';
 
 const PAGE_SIZE = 10;
@@ -53,6 +54,7 @@ const AdminDashboard = () => {
     { id: 'villas', label: 'Villas', icon: FaHome },
     { id: 'users', label: 'Users', icon: FaUsers },
     { id: 'sales-team', label: 'Sales Team', icon: FaHandshake },
+    { id: 'contacts', label: 'Contact Us', icon: FaEnvelope },
     { id: 'cms', label: 'Landing CMS', icon: FaImage },
   ];
 
@@ -92,6 +94,8 @@ const AdminDashboard = () => {
           <VillaManager />
         ) : tab === 'sales-team' ? (
           <SalesTeamManager />
+        ) : tab === 'contacts' ? (
+          <ContactMessages />
         ) : loading ? (
           <div className="flex justify-center py-20">
             <div className="w-10 h-10 border-2 border-luxury-accent border-t-transparent rounded-full animate-spin" />

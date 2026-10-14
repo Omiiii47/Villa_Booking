@@ -40,6 +40,21 @@ export const deleteSalesTeam = async (id) => {
   return data;
 };
 
+export const getContactMessages = async (params = {}) => {
+  const { data } = await adminApi.get('/admin/contacts', { params });
+  return data;
+};
+
+export const markContactMessageRead = async (id) => {
+  const { data } = await adminApi.put(`/admin/contacts/${id}/read`);
+  return data;
+};
+
+export const deleteContactMessage = async (id) => {
+  const { data } = await adminApi.delete(`/admin/contacts/${id}`);
+  return data;
+};
+
 export const getUsers = async (params = {}) => {
   const { data } = await adminApi.get('/users', { params });
   return data;
