@@ -2,6 +2,7 @@ services:
   - type: web
     name: solscape-api
     runtime: node
+    instanceType: free
     rootDir: villa-booking/backend
     buildCommand: npm install
     startCommand: npm start
@@ -43,6 +44,7 @@ services:
   - type: web
     name: solscape-web
     runtime: node
+    instanceType: free
     rootDir: villa-booking/frontend
     buildCommand: npm install && npm run build
     startCommand: npm start
