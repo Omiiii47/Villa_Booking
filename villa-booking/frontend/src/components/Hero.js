@@ -28,6 +28,8 @@ const Hero = () => {
             alt={hero.eyebrow || 'Luxury villa'}
             className="w-full h-[120%] object-cover"
             style={{ scale }}
+            fetchPriority="high"
+            decoding="async"
           />
         )}
         <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/20 to-black/70" />
