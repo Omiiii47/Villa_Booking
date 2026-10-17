@@ -128,12 +128,17 @@ const getOrCreateSection = async (section, platform) => {
 
 const buildLanding = async () => {
   const landing = { desktop: {}, mobile: {} };
+  const jobs = [];
   for (const platform of LANDING_PLATFORMS) {
     for (const section of LANDING_SECTIONS) {
-      const doc = await getOrCreateSection(section, platform);
-      landing[platform][section] = doc.data;
+      jobs.push(
+        getOrCreateSection(section, platform).then((doc) => {
+          landing[platform][section] = doc.data;
+        })
+      );
     }
   }
+  await Promise.all(jobs);
   return landing;
 };
 
@@ -165,6 +170,7 @@ const resolveShowcaseSlugs = async (landing) => {
 const getLanding = async (req, res) => {
   try {
     const landing = await buildLanding();
+    res.set('Cache-Control', 'public, max-age=60');
     res.json(await resolveShowcaseSlugs(landing));
   } catch (error) {
     res.status(500).json({ message: error.message });
